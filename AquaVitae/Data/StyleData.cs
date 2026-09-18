@@ -1,9 +1,12 @@
-using Tomlyn.Serialization;
+using AquaVitae.Layouts.Types;
 
 namespace AquaVitae.Data;
 
-public record StyleData(
-    [property: TomlPropertyName("primary")] string PrimaryColour,
-    [property: TomlPropertyName("secondary")] string SecondaryColour,
-    [property: TomlPropertyName("text")] string TextColour
-);
+public class StyleData(
+    string primary,
+    string secondary
+)
+{
+    public Color PrimaryColor { get; } = Color.FromString(primary);
+    public Color SecondaryColor { get; } = Color.FromString(secondary);
+}

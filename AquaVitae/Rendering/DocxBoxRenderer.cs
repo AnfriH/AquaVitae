@@ -1,4 +1,5 @@
 using AquaVitae.Layouts;
+using AquaVitae.Layouts.Types;
 using DocumentFormat.OpenXml.Wordprocessing;
 
 namespace AquaVitae.Rendering;
@@ -62,7 +63,7 @@ public sealed class DocxBoxRenderer(DocxParagraphRenderer paragraphRenderer)
             tableCellProperties.Shading = new Shading
             {
                 Val = ShadingPatternValues.Clear,
-                Fill = box.FillColor!.Value.ToRgbString()
+                Fill = fillColor.Value.ToString(ColorFormats.Rgb)
             };
         }
         
@@ -72,7 +73,7 @@ public sealed class DocxBoxRenderer(DocxParagraphRenderer paragraphRenderer)
         };
     }
 
-    public Table RenderTable(BoxLayout box, TableCell cell)
+    private Table RenderTable(BoxLayout box, TableCell cell)
     {
         var outerMargins = box.OuterMargins;
         var tableProps = new TableProperties
