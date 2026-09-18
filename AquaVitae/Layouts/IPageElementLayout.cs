@@ -4,8 +4,8 @@ namespace AquaVitae.Layouts;
 
 public interface IPageElementLayout : ILayout
 {
-    Length X { get; }
-    Length Y { get; }
-    Length Width { get; }
-    Length Height { get; }
+    PrintPoint X { get; }
+    PrintPoint Y { get; }
+    PrintPoint Width { get; }
+    PrintPoint Height { get; }
 }

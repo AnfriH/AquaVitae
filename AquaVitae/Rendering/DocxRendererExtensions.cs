@@ -7,7 +7,7 @@ public static class DocxRendererExtensions
 {
     public const int TwipsPerPoint = 20;
     
-    extension(Length l)
+    extension(PrintPoint l)
     {
         public float Twips => l.Points * TwipsPerPoint;
         public uint ToTwipsUInt() => checked((uint)MathF.Round(l.Twips));

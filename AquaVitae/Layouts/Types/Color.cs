@@ -63,7 +63,7 @@ public readonly struct Color : IEquatable<Color>
         return !(left == right);
     }
     
-    public override string ToString() => ToString(ColorFormats.Argb);
+    public override string ToString() => Raw.ToString("X8");
     
     public string ToString(ColorFormats format)
     {
