@@ -1,3 +1,4 @@
+using AquaVitae.Common;
 using AquaVitae.Layouts.Types;
 
 namespace AquaVitae.Layouts;
@@ -9,8 +10,8 @@ public sealed class BoxLayout(PrintPoint x, PrintPoint y, PrintPoint width, Prin
     public PrintPoint Width => width;
     public PrintPoint Height => height;
     
-    private readonly List<ParagraphLayout> _paragraphs = [];
-    public IReadOnlyList<ParagraphLayout> Paragraphs => _paragraphs;
+    private OptionalList<ParagraphLayout> _paragraphs;
+    public IReadOnlyList<ParagraphLayout> Paragraphs => _paragraphs.AsReadOnly();
     
     public Color? FillColor { get; init; }
     public Margins InnerMargins { get; init; } = Margins.Zero;

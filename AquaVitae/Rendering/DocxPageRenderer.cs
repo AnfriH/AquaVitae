@@ -8,6 +8,18 @@ public sealed class DocxPageRenderer(DocxBoxRenderer boxRenderer)
 {
     public async Task RenderAsync(PageLayout page, Body body, bool finalPage)
     {
+        var fillColor = page.FillColor;
+        if (fillColor != null)
+        {
+            await boxRenderer.RenderAsync(
+                new BoxLayout(0, 0, page.PageSize.Width, page.PageSize.Height)
+                {
+                    FillColor = fillColor.Value
+                },
+                body
+            );
+        }
+        
         foreach (var element in page.PageElements)
         {
             switch (element)
