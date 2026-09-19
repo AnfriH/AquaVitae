@@ -54,25 +54,17 @@ public sealed class DocxPageRenderer(DocxBoxRenderer boxRenderer)
         };
         sectionProperties.AppendChild(pageMargin);
         
-        // Final page has the section properties directly embedded into the body
+        // We include a final paragraph to ensure that every page has at least one non-floating element.
+        // Without this, the layout engine tends to munge the last two pages together.
+        if (body.LastChild is not Paragraph paragraph) paragraph = body.AppendChild(new Paragraph());
+        
+        // If it's the last page of the document, the section properties must be added to the body directly.
         if (finalPage)
         {
             body.AppendChild(sectionProperties);
             return;
         }
 
-        var paragraphProperties = new ParagraphProperties
-        {
-            SectionProperties = sectionProperties
-        };
-
-        // If an existing paragraph isn't already present, we create one
-        if (body.LastChild is not Paragraph paragraph)
-        {
-            paragraph = new Paragraph();
-            body.AppendChild(paragraph);
-        }
-        
-        paragraph.ParagraphProperties = paragraphProperties;
+        paragraph.ParagraphProperties = new ParagraphProperties { SectionProperties = sectionProperties };
     }
 }
