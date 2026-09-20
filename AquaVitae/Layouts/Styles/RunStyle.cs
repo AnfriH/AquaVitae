@@ -2,11 +2,10 @@ using AquaVitae.Layouts.Types;
 
 namespace AquaVitae.Layouts.Styles;
 
-public sealed class RunStyleLayout(string name, string id) : IStyleLayout
+public sealed class RunStyle(string name, string id) : IStyle<RunLayout>
 {
     public string Name => name;
-    public string Id => id;
-    
+    public string Id => new(id);
     public string? Font { get; init; }
     public PrintPoint? FontSize { get; init; }
     public Color? Color { get; init; }
