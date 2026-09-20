@@ -11,8 +11,22 @@ public class DocxParagraphRenderer
         var paragraphNode = new Paragraph();
         foreach (var run in paragraph.Runs)
         {
-            var runNode = new Run(new Text(run.Text));
-            paragraphNode.AppendChild(runNode);
+            var runNode = paragraphNode.AppendChild(new Run(new Text(run.Text)));
+            if (run.StyleId != null)
+            {
+                runNode.RunProperties = new RunProperties
+                {
+                    RunStyle = new RunStyle { Val = run.StyleId }
+                };
+            }
+        }
+
+        if (paragraph.StyleId != null)
+        {
+            paragraphNode.ParagraphProperties = new ParagraphProperties
+            {
+                ParagraphStyleId = new ParagraphStyleId { Val = paragraph.StyleId }
+            };
         }
         parent.AppendChild(paragraphNode);
         return Task.CompletedTask;

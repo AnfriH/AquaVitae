@@ -93,7 +93,11 @@ public struct OptionalDictionary<TKey, TValue> :
     public TValue this[TKey key]
     {
         get => AsDictionary()[key];
-        set => AsDictionary()[key] = value;
+        set
+        {
+            Initialize();
+            BackingDictionary[key] = value;
+        }
     }
     
     /// <inheritdoc/>
