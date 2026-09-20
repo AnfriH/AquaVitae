@@ -4,6 +4,7 @@ using AquaVitae.Layouts.Styles;
 using AquaVitae.Layouts.Types;
 using DocumentFormat.OpenXml.Wordprocessing;
 using Color = DocumentFormat.OpenXml.Wordprocessing.Color;
+using RunStyle = AquaVitae.Layouts.Styles.RunStyle;
 
 namespace AquaVitae.Rendering;
 
@@ -20,24 +21,24 @@ public sealed class DocxStylesRenderer
         {
             var styleElement = stylesElement.AppendChild(CreateBaseStyle(style.Name, style.Id, StyleValues.Character));
             styleElement.StyleRunProperties = CreateRunStyleLayout(style);
-            _runStyles[style.Id] = styleElement.StyleRunProperties;
+            _runStyles[style.Id!] = styleElement.StyleRunProperties;
         }
 
         foreach (var style in document.ParagraphStyles.Values)
         {
             var styleElement = stylesElement.AppendChild(
-                CreateBaseStyle(style.Name, style.Id, StyleValues.Paragraph)
+                CreateBaseStyle(style.Name, style.Id!, StyleValues.Paragraph)
             );
             styleElement.StyleParagraphProperties = CreateParagraphStyleLayout(style);
 
-            if (style.RunStyleId == null) continue;
+            if (style.RunId.Value == null) continue;
             
             // If the paragraph style has a run style, we create a base paragraph style
             // for it to inherit the run style from. This reduces the XML size a fair bit.
             // TODO: Consider allowing styles to inherit from other styles explicitly
-            var runStyle = _runStyles[style.RunStyleId];
+            var runStyle = _runStyles[style.RunId!];
             
-            var baseId = style.RunStyleId + "_BASE";
+            var baseId = style.RunId + "_BASE";
             if (_runStyleParagraphBases.Add(baseId))
             {
                 var runBaseElement = stylesElement.AppendChild(
@@ -63,7 +64,7 @@ public sealed class DocxStylesRenderer
         };
     }
 
-    private static StyleParagraphProperties CreateParagraphStyleLayout(ParagraphStyleLayout style)
+    private static StyleParagraphProperties CreateParagraphStyleLayout(ParagraphStyle style)
     {
         var justification = style.Alignment switch
         {
@@ -83,7 +84,7 @@ public sealed class DocxStylesRenderer
         };
     }
 
-    private static StyleRunProperties CreateRunStyleLayout(RunStyleLayout style)
+    private static StyleRunProperties CreateRunStyleLayout(RunStyle style)
     {
         var properties = new StyleRunProperties();
 

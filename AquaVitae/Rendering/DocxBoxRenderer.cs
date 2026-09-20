@@ -90,8 +90,8 @@ public sealed class DocxBoxRenderer(DocxParagraphRenderer paragraphRenderer)
                 LeftFromText = outerMargins.Left.ToTwipShort(),
                 RightFromText = outerMargins.Right.ToTwipShort(),
             
-                VerticalAnchor = VerticalAnchorValues.Text,
-                HorizontalAnchor = HorizontalAnchorValues.Text,
+                VerticalAnchor = VerticalAnchorValues.Page,
+                HorizontalAnchor = HorizontalAnchorValues.Page,
             
                 // TODO: Work out what is actually padding this by 108 Dxa
                 TablePositionX = box.X.ToTwipsInt() + 108,

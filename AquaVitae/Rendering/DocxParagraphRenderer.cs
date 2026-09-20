@@ -12,20 +12,20 @@ public class DocxParagraphRenderer
         foreach (var run in paragraph.Runs)
         {
             var runNode = paragraphNode.AppendChild(new Run(new Text(run.Text)));
-            if (run.StyleId != null)
+            if (run.Style.Value != null)
             {
                 runNode.RunProperties = new RunProperties
                 {
-                    RunStyle = new RunStyle { Val = run.StyleId }
+                    RunStyle = new RunStyle { Val = run.Style.Value }
                 };
             }
         }
 
-        if (paragraph.StyleId != null)
+        if (paragraph.Style.Value != null)
         {
             paragraphNode.ParagraphProperties = new ParagraphProperties
             {
-                ParagraphStyleId = new ParagraphStyleId { Val = paragraph.StyleId }
+                ParagraphStyleId = new ParagraphStyleId { Val = paragraph.Style.Value }
             };
         }
         parent.AppendChild(paragraphNode);
