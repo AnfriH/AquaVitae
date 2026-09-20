@@ -1,41 +1,40 @@
 using System.Diagnostics;
 using AquaVitae.Layouts;
+using DocumentFormat.OpenXml;
 using DocumentFormat.OpenXml.Wordprocessing;
 
-namespace AquaVitae.Rendering;
+namespace AquaVitae.Rendering.Docx;
 
 public sealed class DocxPageRenderer(DocxBoxRenderer boxRenderer)
 {
-    public async Task RenderAsync(PageLayout page, Body body, bool finalPage)
+    public void RenderPage(PageLayout page, Body body, bool finalPage)
     {
         var fillColor = page.FillColor;
         if (fillColor != null)
         {
-            await boxRenderer.RenderAsync(
+            var box = boxRenderer.RenderBox(
                 new BoxLayout(0, 0, page.PageSize.Width, page.PageSize.Height)
                 {
                     FillColor = fillColor.Value
-                },
-                body
+                }
             );
+            body.AppendChild(box);
         }
         
         foreach (var element in page.PageElements)
         {
-            switch (element)
+            var child = element switch
             {
-                case BoxLayout box:
-                    await boxRenderer.RenderAsync(box, body);
-                    break;
-                default:
-                    throw new UnreachableException();
-            }
+                BoxLayout box => boxRenderer.RenderBox(box),
+                _ => throw new UnreachableException()
+            };
+            body.AppendChild(child);
         }
         
         RenderPageFormatting(page, body, finalPage);
     }
     
-    private void RenderPageFormatting(PageLayout page, Body body, bool finalPage)
+    private static void RenderPageFormatting(PageLayout page, Body body, bool finalPage)
     {
         var sectionProperties = new SectionProperties();
         

@@ -1,17 +1,16 @@
 using AquaVitae.Layouts;
-using DocumentFormat.OpenXml;
 using DocumentFormat.OpenXml.Wordprocessing;
 
-namespace AquaVitae.Rendering;
+namespace AquaVitae.Rendering.Docx;
 
 public class DocxParagraphRenderer
 {
-    public Task RenderAsync(ParagraphLayout paragraph, OpenXmlCompositeElement parent)
+    public Paragraph RenderParagraph(ParagraphLayout paragraph)
     {
-        var paragraphNode = new Paragraph();
+        var paragraphElement = new Paragraph();
         foreach (var run in paragraph.Runs)
         {
-            var runNode = paragraphNode.AppendChild(new Run(new Text(run.Text)));
+            var runNode = paragraphElement.AppendChild(new Run(new Text(run.Text)));
             if (run.Style.Value != null)
             {
                 runNode.RunProperties = new RunProperties
@@ -23,12 +22,12 @@ public class DocxParagraphRenderer
 
         if (paragraph.Style.Value != null)
         {
-            paragraphNode.ParagraphProperties = new ParagraphProperties
+            paragraphElement.ParagraphProperties = new ParagraphProperties
             {
                 ParagraphStyleId = new ParagraphStyleId { Val = paragraph.Style.Value }
             };
         }
-        parent.AppendChild(paragraphNode);
-        return Task.CompletedTask;
+        
+        return paragraphElement;
     }
 }

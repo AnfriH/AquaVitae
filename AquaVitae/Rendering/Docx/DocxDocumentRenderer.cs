@@ -1,29 +1,36 @@
 using AquaVitae.Layouts;
+using AquaVitae.Rendering.Abstractions;
 using DocumentFormat.OpenXml;
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Wordprocessing;
 
-namespace AquaVitae.Rendering;
+namespace AquaVitae.Rendering.Docx;
 
 public sealed class DocxDocumentRenderer(DocxPageRenderer pageRenderer, DocxStylesRenderer stylesRenderer) : IDocumentRenderer
 {
-    public async Task RenderAsync(DocumentLayout document, Stream outputStream)
+    public Task RenderDocumentAsync(DocumentLayout document, Stream outputStream)
+    {
+        RenderDocument(document, outputStream);
+        return Task.CompletedTask;
+    }
+
+    public void RenderDocument(DocumentLayout document, Stream outputStream)
     {
         using var wordDocument = WordprocessingDocument.Create(outputStream, WordprocessingDocumentType.Document);
         
         var mainPart = wordDocument.AddMainDocumentPart();
         
-        await RenderStyles(document, mainPart);
-        await RenderBody(document, mainPart);
+        RenderStyles(document, mainPart);
+        RenderBody(document, mainPart);
     }
 
-    private async Task RenderStyles(DocumentLayout document, MainDocumentPart mainPart)
+    private void RenderStyles(DocumentLayout document, MainDocumentPart mainPart)
     {
         var stylesPart = mainPart.AddNewPart<StyleDefinitionsPart>();
-        stylesPart.Styles = await stylesRenderer.RenderAsync(document);;
+        stylesPart.Styles = stylesRenderer.RenderStyles(document);
     }
 
-    private async Task RenderBody(DocumentLayout document, MainDocumentPart mainPart)
+    private void RenderBody(DocumentLayout document, MainDocumentPart mainPart)
     {
         var body = new Body();
         
@@ -34,7 +41,7 @@ public sealed class DocxDocumentRenderer(DocxPageRenderer pageRenderer, DocxStyl
             var page = pages[i];
             var finalPage = i == pages.Count - 1;
 
-            await pageRenderer.RenderAsync(page, body, finalPage);
+            pageRenderer.RenderPage(page, body, finalPage);
         }
         
         mainPart.Document = new Document { Body = body };

@@ -2,18 +2,18 @@ using AquaVitae.Layouts;
 using AquaVitae.Layouts.Types;
 using DocumentFormat.OpenXml.Wordprocessing;
 
-namespace AquaVitae.Rendering;
+namespace AquaVitae.Rendering.Docx;
 
 public sealed class DocxBoxRenderer(DocxParagraphRenderer paragraphRenderer)
 {
-    public async Task RenderAsync(BoxLayout box, Body body)
+    public Table RenderBox(BoxLayout box)
     {
         var tableCell = RenderTableCell(box);
 
         // TODO: allow other elements inside cells
         foreach (var paragraph in box.Paragraphs)
         {
-            await paragraphRenderer.RenderAsync(paragraph, tableCell);
+            tableCell.AppendChild(paragraphRenderer.RenderParagraph(paragraph));
         }
 
         // If the box has no contents, we must add an empty paragraph
@@ -21,12 +21,11 @@ public sealed class DocxBoxRenderer(DocxParagraphRenderer paragraphRenderer)
         {
             tableCell.AppendChild(new Paragraph());
         }
-
-        var table = RenderTable(box, tableCell);
-        body.AppendChild(table);
+        
+        return RenderTable(box, tableCell);
     }
     
-    private TableCell RenderTableCell(BoxLayout box)
+    private static TableCell RenderTableCell(BoxLayout box)
     {
         var innerMargins = box.InnerMargins;
 
@@ -73,7 +72,7 @@ public sealed class DocxBoxRenderer(DocxParagraphRenderer paragraphRenderer)
         };
     }
 
-    private Table RenderTable(BoxLayout box, TableCell cell)
+    private static Table RenderTable(BoxLayout box, TableCell cell)
     {
         var outerMargins = box.OuterMargins;
         var tableProps = new TableProperties

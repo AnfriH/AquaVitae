@@ -1,7 +1,7 @@
 using AquaVitae.Layouts.Types;
 using DocumentFormat.OpenXml;
 
-namespace AquaVitae.Rendering;
+namespace AquaVitae.Rendering.Docx;
 
 public static class DocxRendererExtensions
 {

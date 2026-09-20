@@ -6,14 +6,14 @@ using DocumentFormat.OpenXml.Wordprocessing;
 using Color = DocumentFormat.OpenXml.Wordprocessing.Color;
 using RunStyle = AquaVitae.Layouts.Styles.RunStyle;
 
-namespace AquaVitae.Rendering;
+namespace AquaVitae.Rendering.Docx;
 
 public sealed class DocxStylesRenderer
 {
     private readonly Dictionary<string, StyleRunProperties> _runStyles = new();
     private readonly HashSet<string> _runStyleParagraphBases = [];
     
-    public async Task<Styles> RenderAsync(DocumentLayout document)
+    public Styles RenderStyles(DocumentLayout document)
     {
         var stylesElement = new Styles();
         
@@ -21,7 +21,7 @@ public sealed class DocxStylesRenderer
         {
             var styleElement = stylesElement.AppendChild(CreateBaseStyle(style.Name, style.Id, StyleValues.Character));
             styleElement.StyleRunProperties = CreateRunStyleLayout(style);
-            _runStyles[style.Id!] = styleElement.StyleRunProperties;
+            _runStyles[style.Id] = styleElement.StyleRunProperties;
         }
 
         foreach (var style in document.ParagraphStyles.Values)
@@ -36,7 +36,7 @@ public sealed class DocxStylesRenderer
             // If the paragraph style has a run style, we create a base paragraph style
             // for it to inherit the run style from. This reduces the XML size a fair bit.
             // TODO: Consider allowing styles to inherit from other styles explicitly
-            var runStyle = _runStyles[style.RunId!];
+            var runStyle = _runStyles[style.RunId.Value!];
             
             var baseId = style.RunId + "_BASE";
             if (_runStyleParagraphBases.Add(baseId))
