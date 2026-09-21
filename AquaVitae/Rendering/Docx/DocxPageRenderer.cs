@@ -1,18 +1,19 @@
-using System.Diagnostics;
 using AquaVitae.Layouts;
 using DocumentFormat.OpenXml;
 using DocumentFormat.OpenXml.Wordprocessing;
 
 namespace AquaVitae.Rendering.Docx;
 
-public sealed class DocxPageRenderer(DocxBoxRenderer boxRenderer)
+public sealed class DocxPageRenderer(Lazy<DocxNumberingRenderer> numberingRenderer)
 {
+    private DocxBoxRenderer BoxRenderer => field ??= new DocxBoxRenderer(numberingRenderer);
+    
     public void RenderPage(PageLayout page, Body body, bool finalPage)
     {
         var fillColor = page.FillColor;
         if (fillColor != null)
         {
-            var box = boxRenderer.RenderBox(
+            var box = BoxRenderer.RenderBox(
                 new BoxLayout(0, 0, page.PageSize.Width, page.PageSize.Height)
                 {
                     FillColor = fillColor.Value
@@ -23,11 +24,11 @@ public sealed class DocxPageRenderer(DocxBoxRenderer boxRenderer)
         
         foreach (var element in page.PageElements)
         {
-            var child = element switch
+            OpenXmlElement child = element switch
             {
-                BoxLayout box => boxRenderer.RenderBox(box),
-                _ => throw new UnreachableException()
+                BoxLayout box => BoxRenderer.RenderBox(box)
             };
+
             body.AppendChild(child);
         }
         

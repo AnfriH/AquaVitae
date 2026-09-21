@@ -1,9 +1,9 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace AquaVitae.Layouts.Styles;
 
-public record struct StyleId<TLayout>(string? Value) where TLayout : ILayout
+public readonly record struct StyleId<TLayout>(string? Value) where TLayout : LayoutBase
 {
-    public static implicit operator string?(StyleId<TLayout> layout)
-    {
-        return layout.Value;
-    }
+    [MemberNotNullWhen(false, nameof(Value))]
+    public bool IsNone => Value == null;
 }

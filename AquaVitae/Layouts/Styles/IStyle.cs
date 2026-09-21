@@ -6,4 +6,4 @@ public interface IStyle
     string Id { get; }
 }
 
-public interface IStyle<TLayout> : IStyle where TLayout : ILayout;
+public interface IStyle<TLayout> : IStyle where TLayout : LayoutBase;

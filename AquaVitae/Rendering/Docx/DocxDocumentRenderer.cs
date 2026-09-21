@@ -1,3 +1,4 @@
+using System.Xml.Linq;
 using AquaVitae.Layouts;
 using AquaVitae.Rendering.Abstractions;
 using DocumentFormat.OpenXml;
@@ -6,8 +7,10 @@ using DocumentFormat.OpenXml.Wordprocessing;
 
 namespace AquaVitae.Rendering.Docx;
 
-public sealed class DocxDocumentRenderer(DocxPageRenderer pageRenderer, DocxStylesRenderer stylesRenderer) : IDocumentRenderer
+public sealed class DocxDocumentRenderer : IDocumentRenderer
 {
+    private readonly DocxStylesRenderer _stylesRenderer = new();
+    
     public Task RenderDocumentAsync(DocumentLayout document, Stream outputStream)
     {
         RenderDocument(document, outputStream);
@@ -27,7 +30,7 @@ public sealed class DocxDocumentRenderer(DocxPageRenderer pageRenderer, DocxStyl
     private void RenderStyles(DocumentLayout document, MainDocumentPart mainPart)
     {
         var stylesPart = mainPart.AddNewPart<StyleDefinitionsPart>();
-        stylesPart.Styles = stylesRenderer.RenderStyles(document);
+        stylesPart.Styles = _stylesRenderer.RenderStyles(document);
     }
 
     private void RenderBody(DocumentLayout document, MainDocumentPart mainPart)
@@ -35,6 +38,13 @@ public sealed class DocxDocumentRenderer(DocxPageRenderer pageRenderer, DocxStyl
         var body = new Body();
         
         var pages = document.Pages;
+        
+        var numberingRenderer = new Lazy<DocxNumberingRenderer>(
+            () => new DocxNumberingRenderer(document, mainPart),
+            false
+        );
+
+        var pageRenderer = new DocxPageRenderer(numberingRenderer);
         
         for (var i = 0; i < pages.Count; i++)
         {

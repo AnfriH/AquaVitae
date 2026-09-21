@@ -11,7 +11,7 @@ public class DocxParagraphRenderer
         foreach (var run in paragraph.Runs)
         {
             var runNode = paragraphElement.AppendChild(new Run(new Text(run.Text)));
-            if (run.Style.Value != null)
+            if (!run.Style.IsNone)
             {
                 runNode.RunProperties = new RunProperties
                 {
@@ -20,7 +20,7 @@ public class DocxParagraphRenderer
             }
         }
 
-        if (paragraph.Style.Value != null)
+        if (!paragraph.Style.IsNone)
         {
             paragraphElement.ParagraphProperties = new ParagraphProperties
             {

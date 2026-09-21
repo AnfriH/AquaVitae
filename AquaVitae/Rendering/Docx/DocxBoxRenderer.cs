@@ -1,19 +1,34 @@
+using System.Diagnostics;
 using AquaVitae.Layouts;
 using AquaVitae.Layouts.Types;
 using DocumentFormat.OpenXml.Wordprocessing;
 
 namespace AquaVitae.Rendering.Docx;
 
-public sealed class DocxBoxRenderer(DocxParagraphRenderer paragraphRenderer)
+public sealed class DocxBoxRenderer(Lazy<DocxNumberingRenderer> numberingRenderer)
 {
+    private DocxParagraphRenderer ParagraphRenderer => field ??= new DocxParagraphRenderer();
+    private DocxVerticalListRenderer VerticalListRenderer => field ??= new DocxVerticalListRenderer(
+        numberingRenderer.Value,
+        ParagraphRenderer
+    );
+    
     public Table RenderBox(BoxLayout box)
     {
         var tableCell = RenderTableCell(box);
 
         // TODO: allow other elements inside cells
-        foreach (var paragraph in box.Paragraphs)
+        foreach (var child in box.Paragraphs)
         {
-            tableCell.AppendChild(paragraphRenderer.RenderParagraph(paragraph));
+            switch (child)
+            {
+                case ParagraphLayout paragraph:
+                    tableCell.AppendChild(ParagraphRenderer.RenderParagraph(paragraph));
+                    break;
+                case VerticalListLayout vertList:
+                    VerticalListRenderer.RenderVerticalList(vertList, tableCell);
+                    break;
+            }
         }
 
         // If the box has no contents, we must add an empty paragraph
