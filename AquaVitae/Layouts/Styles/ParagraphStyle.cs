@@ -4,7 +4,7 @@ public sealed class ParagraphStyle(string name, string id) : IStyle<ParagraphLay
 {
     public string Name => name;
     public string Id => new(id);
-    public StyleId<RunLayout> RunId { get; init; }
+    public StyleId<RunLayoutBase> RunId { get; init; }
     public ParagraphAlignment Alignment { get; init; } = ParagraphAlignment.Left;
 }
 

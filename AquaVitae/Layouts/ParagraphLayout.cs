@@ -6,7 +6,7 @@ namespace AquaVitae.Layouts;
 public sealed class ParagraphLayout : ParagraphLayoutBase
 {
     public StyleId<ParagraphLayout> Style { get; init; }
-    private OptionalList<RunLayout> _runs;
-    public IReadOnlyList<RunLayout> Runs => _runs.AsReadOnly();
-    public void AddRun(RunLayout run) => _runs.Add(run);
+    private OptionalList<RunLayoutBase> _runs;
+    public IReadOnlyList<RunLayoutBase> Runs => _runs.AsReadOnly();
+    public void AddRun(RunLayoutBase run) => _runs.Add(run);
 }

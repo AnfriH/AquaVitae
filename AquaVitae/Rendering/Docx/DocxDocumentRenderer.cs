@@ -43,7 +43,12 @@ public sealed class DocxDocumentRenderer : IDocumentRenderer
             false
         );
 
-        var pageRenderer = new DocxPageRenderer(numberingRenderer);
+        var hyperlinkRenderer = new Lazy<DocxHyperlinkRenderer>(
+            () => new DocxHyperlinkRenderer(mainPart),
+            false
+        );
+
+        var pageRenderer = new DocxPageRenderer(numberingRenderer, hyperlinkRenderer);
         
         for (var i = 0; i < pages.Count; i++)
         {

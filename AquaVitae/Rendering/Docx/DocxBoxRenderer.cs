@@ -5,9 +5,12 @@ using DocumentFormat.OpenXml.Wordprocessing;
 
 namespace AquaVitae.Rendering.Docx;
 
-public sealed class DocxBoxRenderer(Lazy<DocxNumberingRenderer> numberingRenderer)
+public sealed class DocxBoxRenderer(
+    Lazy<DocxNumberingRenderer> numberingRenderer,
+    Lazy<DocxHyperlinkRenderer> hyperlinkRenderer
+)
 {
-    private DocxParagraphRenderer ParagraphRenderer => field ??= new DocxParagraphRenderer();
+    private DocxParagraphRenderer ParagraphRenderer => field ??= new DocxParagraphRenderer(hyperlinkRenderer);
     private DocxVerticalListRenderer VerticalListRenderer => field ??= new DocxVerticalListRenderer(
         numberingRenderer.Value,
         ParagraphRenderer

@@ -1,6 +1,3 @@
 namespace AquaVitae.Layouts;
 
-public closed class ParagraphLayoutBase : LayoutBase
-{
-    
-}
+public closed class ParagraphLayoutBase : LayoutBase;

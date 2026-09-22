@@ -20,10 +20,10 @@ public sealed class DocumentLayout : LayoutBase
     
     public void AddPage(PageLayout page) => _pages.Add(page);
 
-    public StyleId<RunLayout> AddRunStyle(RunStyle style)
+    public StyleId<RunLayoutBase> AddRunStyle(RunStyle style)
     {
         _runStyles[style.Id] = style;
-        return new StyleId<RunLayout>(style.Id);
+        return new StyleId<RunLayoutBase>(style.Id);
     }
 
     public StyleId<ParagraphLayout> AddParagraphStyle(ParagraphStyle style)

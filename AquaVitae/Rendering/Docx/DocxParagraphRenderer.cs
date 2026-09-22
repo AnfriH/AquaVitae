@@ -1,23 +1,23 @@
 using AquaVitae.Layouts;
+using DocumentFormat.OpenXml;
 using DocumentFormat.OpenXml.Wordprocessing;
 
 namespace AquaVitae.Rendering.Docx;
 
-public class DocxParagraphRenderer
+public class DocxParagraphRenderer(Lazy<DocxHyperlinkRenderer> hyperlinkRenderer)
 {
     public Paragraph RenderParagraph(ParagraphLayout paragraph)
     {
         var paragraphElement = new Paragraph();
-        foreach (var run in paragraph.Runs)
+        foreach (var runBase in paragraph.Runs)
         {
-            var runNode = paragraphElement.AppendChild(new Run(new Text(run.Text)));
-            if (!run.Style.IsNone)
+            OpenXmlElement element = runBase switch
             {
-                runNode.RunProperties = new RunProperties
-                {
-                    RunStyle = new RunStyle { Val = run.Style.Value }
-                };
-            }
+                RunLayout run => CreateRun(run),
+                HyperlinkLayout hyperlink => CreateHyperlink(hyperlink)
+            };
+            
+            paragraphElement.AppendChild(element);
         }
 
         if (!paragraph.Style.IsNone)
@@ -29,5 +29,32 @@ public class DocxParagraphRenderer
         }
         
         return paragraphElement;
+    }
+
+    private static Run CreateRun(RunLayoutBase layout)
+    {
+        var runElement = new Run(new Text(layout.Text));
+        if (!layout.Style.IsNone)
+        {
+            runElement.RunProperties = new RunProperties
+            {
+                RunStyle = new RunStyle { Val = layout.Style.Value }
+            };
+        }
+        return runElement;
+    }
+
+    private Hyperlink CreateHyperlink(HyperlinkLayout layout)
+    {
+        var relId = hyperlinkRenderer.Value.AddHyperlink(layout.Uri);
+        
+        var hyperlinkElement = new Hyperlink
+        {
+            Id = relId,
+        };
+        
+        hyperlinkElement.AppendChild(CreateRun(layout));
+        
+        return hyperlinkElement;
     }
 }
