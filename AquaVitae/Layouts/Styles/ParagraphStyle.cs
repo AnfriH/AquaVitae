@@ -1,9 +1,7 @@
 namespace AquaVitae.Layouts.Styles;
 
-public sealed class ParagraphStyle(string name, string id) : IStyle<ParagraphLayout>
+public sealed record ParagraphStyle(string Name, string Id) : IStyle<ParagraphLayout>
 {
-    public string Name => name;
-    public string Id => new(id);
     public StyleId<RunLayoutBase> RunId { get; init; }
     public ParagraphAlignment Alignment { get; init; } = ParagraphAlignment.Left;
 }
