@@ -75,13 +75,26 @@ public sealed class DocxStylesRenderer
             _ => throw new UnreachableException()
         };
 
-        return new StyleParagraphProperties
+        var properties = new StyleParagraphProperties
         {
-            Justification = new Justification
-            {
-                Val = justification
-            }
+            Justification = new Justification { Val = justification }
         };
+
+        if (style.Before != 0)
+        {
+            properties.SpacingBetweenLines = new SpacingBetweenLines
+            {
+                Before = style.Before.ToTwipsString()
+            };
+        }
+
+        if (style.After != 0)
+        {
+            properties.SpacingBetweenLines ??= new SpacingBetweenLines();
+            properties.SpacingBetweenLines.After = style.After.ToTwipsString();
+        }
+        
+        return properties;
     }
 
     private static StyleRunProperties CreateRunStyleLayout(RunStyle style)
