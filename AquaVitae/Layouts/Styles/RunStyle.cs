@@ -6,7 +6,7 @@ public sealed class RunStyle(string name, string id) : IStyle<RunLayout>
 {
     public string Name => name;
     public string Id => new(id);
-    public string? Font { get; init; }
+    public string? FontName { get; init; }
     public PrintPoint? FontSize { get; init; }
     public Color? Color { get; init; }
     public bool Bold { get; init; }

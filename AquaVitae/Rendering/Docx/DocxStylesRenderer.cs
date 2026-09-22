@@ -88,7 +88,7 @@ public sealed class DocxStylesRenderer
     {
         var properties = new StyleRunProperties();
 
-        var font = style.Font;
+        var font = style.FontName;
         if (font != null)
         {
             properties.RunFonts = new RunFonts
