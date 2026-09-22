@@ -6,7 +6,7 @@ using DocumentFormat.OpenXml.Wordprocessing;
 using Color = DocumentFormat.OpenXml.Wordprocessing.Color;
 using RunStyle = AquaVitae.Layouts.Styles.RunStyle;
 
-namespace AquaVitae.Rendering.Docx;
+namespace AquaVitae.Render.Docx;
 
 public sealed class DocxStylesRenderer
 {

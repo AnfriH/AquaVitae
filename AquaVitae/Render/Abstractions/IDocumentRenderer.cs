@@ -1,6 +1,6 @@
 using AquaVitae.Layouts;
 
-namespace AquaVitae.Rendering.Abstractions;
+namespace AquaVitae.Render.Abstractions;
 
 public interface IDocumentRenderer
 {

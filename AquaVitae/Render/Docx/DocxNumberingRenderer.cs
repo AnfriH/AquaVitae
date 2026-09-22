@@ -4,7 +4,7 @@ using AquaVitae.Layouts.Styles.Lists;
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Wordprocessing;
 
-namespace AquaVitae.Rendering.Docx;
+namespace AquaVitae.Render.Docx;
 
 public class DocxNumberingRenderer
 {

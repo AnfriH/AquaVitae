@@ -1,6 +1,6 @@
 using DocumentFormat.OpenXml.Packaging;
 
-namespace AquaVitae.Rendering.Docx;
+namespace AquaVitae.Render.Docx;
 
 public sealed class DocxHyperlinkRenderer(MainDocumentPart documentPart)
 {

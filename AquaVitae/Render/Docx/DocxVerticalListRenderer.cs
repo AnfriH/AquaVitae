@@ -2,7 +2,7 @@ using AquaVitae.Layouts;
 using DocumentFormat.OpenXml;
 using DocumentFormat.OpenXml.Wordprocessing;
 
-namespace AquaVitae.Rendering.Docx;
+namespace AquaVitae.Render.Docx;
 
 public sealed class DocxVerticalListRenderer(DocxNumberingRenderer numberingRenderer, DocxParagraphRenderer paragraphRenderer)
 {

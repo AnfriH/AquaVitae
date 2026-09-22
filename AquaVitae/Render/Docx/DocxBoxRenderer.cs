@@ -1,9 +1,8 @@
-using System.Diagnostics;
 using AquaVitae.Layouts;
 using AquaVitae.Layouts.Types;
 using DocumentFormat.OpenXml.Wordprocessing;
 
-namespace AquaVitae.Rendering.Docx;
+namespace AquaVitae.Render.Docx;
 
 public sealed class DocxBoxRenderer(
     Lazy<DocxNumberingRenderer> numberingRenderer,

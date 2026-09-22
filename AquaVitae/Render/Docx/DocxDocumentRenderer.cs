@@ -1,10 +1,10 @@
 using AquaVitae.Layouts;
-using AquaVitae.Rendering.Abstractions;
+using AquaVitae.Render.Abstractions;
 using DocumentFormat.OpenXml;
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Wordprocessing;
 
-namespace AquaVitae.Rendering.Docx;
+namespace AquaVitae.Render.Docx;
 
 public sealed class DocxDocumentRenderer : IDocumentRenderer
 {

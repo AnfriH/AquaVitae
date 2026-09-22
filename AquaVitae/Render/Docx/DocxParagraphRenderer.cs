@@ -2,7 +2,7 @@ using AquaVitae.Layouts;
 using DocumentFormat.OpenXml;
 using DocumentFormat.OpenXml.Wordprocessing;
 
-namespace AquaVitae.Rendering.Docx;
+namespace AquaVitae.Render.Docx;
 
 public class DocxParagraphRenderer(Lazy<DocxHyperlinkRenderer> hyperlinkRenderer)
 {
