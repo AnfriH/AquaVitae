@@ -1,8 +1,7 @@
 using System.Diagnostics;
 using AquaVitae.Common;
 using AquaVitae.Layouts;
-using AquaVitae.Layouts.Styles;
-using AquaVitae.Layouts.Types;
+using AquaVitae.Layouts.Styles.Lists;
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Wordprocessing;
 
@@ -33,47 +32,36 @@ public class DocxNumberingRenderer
         var entry = GetAbstractEntry(style);
 
         if (!entry.Levels.Add(level)) return entry.NumberId;
-
-        // TODO: add more styling configuration
-        var layer = level + 1;
-        var hanging = style.FirstIndentation / 2;
-        var left = hanging + style.FollowingIndentation * layer;
         
+        var left = style.Indentation * level;
+        
+        var markerStyle = style.MarkerStyle;
         
         var levelElement = new Level
         {
+            // TODO: Currently, we're just directly injecting docx primitives,
+            //  which isn't portable with other output formats.
+            LevelText = new LevelText { Val = markerStyle.GetStyle(level) },
             LevelIndex = level,
+            LevelSuffix = new LevelSuffix { Val = LevelSuffixValues.Space },
+            LevelJustification = new LevelJustification { Val = LevelJustificationValues.Left },
             PreviousParagraphProperties = new PreviousParagraphProperties
             {
                 Indentation = new Indentation
                 {
-                    Left = left.ToTwipsString(),
-                    Hanging = hanging.ToTwipsString()
-                },
-                Tabs = new Tabs(new TabStop
-                    {
-                        Val = TabStopValues.Center,
-                        Position = left.ToTwipsInt()
-                    }
-                )
+                    Left = left.ToTwipsString()
+                }
             }
         };
 
-        switch (style.Type)
+        if (markerStyle.Ordered)
         {
-            case VerticalListType.Unordered:
-                levelElement.NumberingFormat = new NumberingFormat { Val = NumberFormatValues.Bullet };
-                levelElement.LevelText = new LevelText { Val = "-" };
-                levelElement.LevelJustification = new LevelJustification { Val = LevelJustificationValues.Center };
-                break;
-            case VerticalListType.Ordered:
-                levelElement.NumberingFormat = new NumberingFormat { Val = NumberFormatValues.Decimal };
-                levelElement.StartNumberingValue = new StartNumberingValue { Val = 1 };
-                levelElement.LevelText = new LevelText { Val = $"%{layer}." };
-                levelElement.LevelJustification = new LevelJustification { Val = LevelJustificationValues.Center };
-                break;
-            default:
-                throw new UnreachableException();
+            levelElement.NumberingFormat = new NumberingFormat { Val = NumberFormatValues.Decimal };
+            levelElement.StartNumberingValue = new StartNumberingValue { Val = 1 };
+        }
+        else
+        {
+            levelElement.NumberingFormat = new NumberingFormat { Val = NumberFormatValues.Bullet };
         }
 
         entry.Element.AppendChild(levelElement);
@@ -91,7 +79,7 @@ public class DocxNumberingRenderer
         }
 
         // If we're unordered, we can reuse the existing numbering instance
-        if (style.Type == VerticalListType.Unordered) return entry;
+        if (!style.MarkerStyle.Ordered) return entry;
         
         // Otherwise, we're ordered, therefore we need to create a new instance
         AppendNumberingInstance(_numberId++, entry.AbstractId);
@@ -102,8 +90,7 @@ public class DocxNumberingRenderer
     {
         var element = new AbstractNum
         {
-            AbstractNumberId = abstractId,
-            MultiLevelType = new MultiLevelType { Val = MultiLevelValues.HybridMultilevel }
+            AbstractNumberId = abstractId
         };
         _numberingElement.AppendChild(element);
         

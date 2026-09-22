@@ -1,4 +1,3 @@
-using System.Xml.Linq;
 using AquaVitae.Layouts;
 using AquaVitae.Rendering.Abstractions;
 using DocumentFormat.OpenXml;
