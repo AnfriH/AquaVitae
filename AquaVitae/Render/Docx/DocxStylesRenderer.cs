@@ -80,18 +80,25 @@ public sealed class DocxStylesRenderer
             Justification = new Justification { Val = justification }
         };
 
-        if (style.Before != 0)
+        if (style.Before != null)
         {
             properties.SpacingBetweenLines = new SpacingBetweenLines
             {
-                Before = style.Before.ToTwipsString()
+                Before = style.Before.Value.ToTwipsString()
             };
         }
 
-        if (style.After != 0)
+        if (style.After != null)
         {
             properties.SpacingBetweenLines ??= new SpacingBetweenLines();
-            properties.SpacingBetweenLines.After = style.After.ToTwipsString();
+            properties.SpacingBetweenLines.After = style.After.Value.ToTwipsString();
+        }
+
+        if (style.Between != null)
+        {
+            properties.SpacingBetweenLines ??= new SpacingBetweenLines();
+            properties.SpacingBetweenLines.LineRule = LineSpacingRuleValues.AtLeast;
+            properties.SpacingBetweenLines.Line = style.Between.Value.ToTwipsString();
         }
         
         return properties;
