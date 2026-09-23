@@ -6,8 +6,9 @@ public sealed record ParagraphStyle(string Name, string Id) : IStyle<ParagraphLa
 {
     public StyleId<RunLayoutBase> RunId { get; init; }
     public ParagraphAlignment Alignment { get; init; } = ParagraphAlignment.Left;
-    public PrintPoint Before { get; init; }
-    public PrintPoint After { get; init; }
+    public PrintPoint? Before { get; init; }
+    public PrintPoint? After { get; init; }
+    public PrintPoint? Between { get; init; }
 }
 
 public enum ParagraphAlignment

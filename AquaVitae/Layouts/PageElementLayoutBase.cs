@@ -4,8 +4,6 @@ namespace AquaVitae.Layouts;
 
 public closed class PageElementLayoutBase : LayoutBase
 {
-    PrintPoint X { get; }
-    PrintPoint Y { get; }
-    PrintPoint Width { get; }
-    PrintPoint Height { get; }
+    public virtual PrintPoint X { get; }
+    public virtual PrintPoint Y { get; }
 }

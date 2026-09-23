@@ -5,8 +5,8 @@ namespace AquaVitae.Layouts;
 
 public sealed class BoxLayout(PrintPoint x, PrintPoint y, PrintPoint width, PrintPoint height) : PageElementLayoutBase
 {
-    public PrintPoint X => x;
-    public PrintPoint Y => y;
+    public override PrintPoint X => x;
+    public override PrintPoint Y => y;
     public PrintPoint Width => width;
     public PrintPoint Height => height;
     
@@ -15,7 +15,6 @@ public sealed class BoxLayout(PrintPoint x, PrintPoint y, PrintPoint width, Prin
     
     public Color? FillColor { get; init; }
     public Margins InnerMargins { get; init; } = Margins.Zero;
-    public Margins OuterMargins { get; init; } = Margins.Zero;
     
     public void AddParagraph(ParagraphLayoutBase paragraph) => _paragraphs.Add(paragraph);
 }

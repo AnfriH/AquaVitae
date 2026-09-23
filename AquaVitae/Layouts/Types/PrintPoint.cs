@@ -69,6 +69,26 @@ public readonly record struct PrintPoint(float Points) : IComparable<PrintPoint>
         return left.Points / right.Points;
     }
 
+    public static bool operator >(PrintPoint left, PrintPoint right)
+    {
+        return left.Points > right.Points;
+    }
+
+    public static bool operator >=(PrintPoint left, PrintPoint right)
+    {
+        return left.Points >= right.Points;
+    }
+
+    public static bool operator <(PrintPoint left, PrintPoint right)
+    {
+        return left.Points < right.Points;
+    }
+    
+    public static bool operator <=(PrintPoint left, PrintPoint right)
+    {
+        return  left.Points <= right.Points;
+    }
+
     public static implicit operator PrintPoint(float value)
     {
         return new PrintPoint(value);
