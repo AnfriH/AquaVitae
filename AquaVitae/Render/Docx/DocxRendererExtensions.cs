@@ -9,6 +9,7 @@ public static class DocxRendererExtensions
     
     extension(PrintPoint pt)
     {
+        public static PrintPoint FromTwips(float twips) => new(twips / TwipsPerPoint);
         public float Twips => pt.Points * TwipsPerPoint;
         public uint ToTwipsUInt() => checked((uint)MathF.Round(pt.Twips));
         public uint ToHalfPointsUint() => checked((uint)MathF.Round(pt.Points * 2));

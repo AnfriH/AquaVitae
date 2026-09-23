@@ -91,7 +91,14 @@ public sealed class DocxBoxRenderer(
 
     private static Table RenderTable(BoxLayout box, TableCell cell)
     {
-        var outerMargins = box.OuterMargins;
+        // For a reason I've still not been able to work out,
+        // floating tables are consistently offset by -108 twips.
+        var x = box.X + PrintPoint.FromTwips(108);
+        
+        // Due to a table layering bug in OpenXML, we cannot have tables whose
+        // y position exactly aligns with the top of the page.
+        var y = box.Y != 0 ? box.Y : PrintPoint.FromTwips(1);
+        
         var tableProps = new TableProperties
         {
             TableWidth = new TableWidth
@@ -101,17 +108,16 @@ public sealed class DocxBoxRenderer(
             },
             TablePositionProperties = new TablePositionProperties
             {
-                TopFromText = outerMargins.Top.ToTwipShort(),
-                BottomFromText = outerMargins.Bottom.ToTwipShort(),
-                LeftFromText = outerMargins.Left.ToTwipShort(),
-                RightFromText = outerMargins.Right.ToTwipShort(),
+                TopFromText = 0,
+                BottomFromText = 0,
+                LeftFromText = 0,
+                RightFromText = 0,
             
                 VerticalAnchor = VerticalAnchorValues.Page,
                 HorizontalAnchor = HorizontalAnchorValues.Page,
-            
-                // TODO: Work out what is actually padding this by 108 Dxa
-                TablePositionX = box.X.ToTwipsInt() + 108,
-                TablePositionY = box.Y.ToTwipsInt()
+                
+                TablePositionX = x.ToTwipsInt(),
+                TablePositionY = y.ToTwipsInt()
             },
             TableOverlap = new TableOverlap { Val = TableOverlapValues.Overlap }
         };
@@ -130,16 +136,28 @@ public sealed class DocxBoxRenderer(
         
         table.TableGrid = tableGrid;
 
-        var row = new TableRow
+        var rowProperties = new TableRowProperties();
+        
+        var boxHeight = box.Height;
+        if (boxHeight.Points <= 0)
         {
-            TableRowProperties = [
-                with(new TableRowHeight
-                {
-                    Val = box.Height.ToTwipsUInt(),
-                    HeightType = HeightRuleValues.Exact
-                })
-            ]
-        };
+            rowProperties.AppendChild(new TableRowHeight
+            {
+                Val = 0,
+                HeightType = HeightRuleValues.Auto
+            });
+        }
+        else
+        {
+            rowProperties.AppendChild(new TableRowHeight
+            {
+                Val = boxHeight.ToTwipsUInt(),
+                HeightType = HeightRuleValues.Exact
+            });
+        }
+        rowProperties.AppendChild(new CantSplit { Val = OnOffOnlyValues.On });
+        
+        var row = new TableRow { TableRowProperties = rowProperties };
         
         row.AppendChild(cell);
         table.AppendChild(row);
