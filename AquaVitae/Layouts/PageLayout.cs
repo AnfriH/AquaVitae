@@ -5,9 +5,9 @@ namespace AquaVitae.Layouts;
 
 public sealed class PageLayout(PageSize pageSize) : LayoutBase
 {
-    private OptionalList<PageElementLayoutBase> _pageElements;
-    public IReadOnlyList<PageElementLayoutBase> PageElements => _pageElements.AsReadOnly();
+    private OptionalList<ElementLayoutBase> _pageElements;
+    public IReadOnlyList<ElementLayoutBase> PageElements => _pageElements.AsReadOnly();
     public PageSize PageSize => pageSize;
     public Color? FillColor { get; init; }
-    public void AddPageElement(PageElementLayoutBase pageElement) => _pageElements.Add(pageElement);
+    public void AddPageElement(ElementLayoutBase element) => _pageElements.Add(element);
 }

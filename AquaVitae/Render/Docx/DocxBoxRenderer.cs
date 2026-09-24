@@ -15,12 +15,12 @@ public sealed class DocxBoxRenderer(
         ParagraphRenderer
     );
     
-    public Table RenderBox(BoxLayout box)
+    public Table RenderBox(TextBoxLayout textBox)
     {
-        var tableCell = RenderTableCell(box);
+        var tableCell = RenderTableCell(textBox);
 
         // TODO: allow other elements inside cells
-        foreach (var child in box.Paragraphs)
+        foreach (var child in textBox.Paragraphs)
         {
             switch (child)
             {
@@ -33,18 +33,18 @@ public sealed class DocxBoxRenderer(
             }
         }
 
-        // If the box has no contents, we must add an empty paragraph
-        if (box.Paragraphs.Count == 0)
+        // If the textbox has no contents, we must add an empty paragraph
+        if (textBox.Paragraphs.Count == 0)
         {
             tableCell.AppendChild(new Paragraph());
         }
         
-        return RenderTable(box, tableCell);
+        return RenderTable(textBox, tableCell);
     }
     
-    private static TableCell RenderTableCell(BoxLayout box)
+    private static TableCell RenderTableCell(TextBoxLayout textBox)
     {
-        var innerMargins = box.InnerMargins;
+        var innerMargins = textBox.InnerMargins;
 
         var tableCellProperties = new TableCellProperties
         {
@@ -73,7 +73,7 @@ public sealed class DocxBoxRenderer(
             }
         };
 
-        var fillColor = box.FillColor;
+        var fillColor = textBox.FillColor;
         if (fillColor.HasValue)
         {
             tableCellProperties.Shading = new Shading
@@ -89,21 +89,21 @@ public sealed class DocxBoxRenderer(
         };
     }
 
-    private static Table RenderTable(BoxLayout box, TableCell cell)
+    private static Table RenderTable(TextBoxLayout textBox, TableCell cell)
     {
         // For a reason I've still not been able to work out,
         // floating tables are consistently offset by -108 twips.
-        var x = box.X + PrintPoint.FromTwips(108);
+        var x = textBox.X + PrintPoint.FromTwips(108);
         
         // Due to a table layering bug in OpenXML, we cannot have tables whose
         // y position exactly aligns with the top of the page.
-        var y = box.Y != 0 ? box.Y : PrintPoint.FromTwips(1);
+        var y = textBox.Y != 0 ? textBox.Y : PrintPoint.FromTwips(1);
         
         var tableProps = new TableProperties
         {
             TableWidth = new TableWidth
             {
-                Width = box.Width.ToTwipsString(),
+                Width = textBox.Width.ToTwipsString(),
                 Type = TableWidthUnitValues.Dxa
             },
             TablePositionProperties = new TablePositionProperties
@@ -129,7 +129,7 @@ public sealed class DocxBoxRenderer(
         
         var gridColumn = new GridColumn
         {
-            Width = box.Width.ToTwipsString(),
+            Width = textBox.Width.ToTwipsString(),
         };
         var tableGrid = new TableGrid();
         tableGrid.AppendChild(gridColumn);
@@ -138,7 +138,7 @@ public sealed class DocxBoxRenderer(
 
         var rowProperties = new TableRowProperties();
         
-        var boxHeight = box.Height;
+        var boxHeight = textBox.Height;
         if (boxHeight.Points <= 0)
         {
             rowProperties.AppendChild(new TableRowHeight

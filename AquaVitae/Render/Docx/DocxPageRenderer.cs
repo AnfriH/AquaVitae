@@ -17,7 +17,7 @@ public sealed class DocxPageRenderer(
         if (fillColor != null)
         {
             var box = BoxRenderer.RenderBox(
-                new BoxLayout(0, 0, page.PageSize.Width, page.PageSize.Height)
+                new TextBoxLayout(0, 0, page.PageSize.Width, page.PageSize.Height)
                 {
                     FillColor = fillColor.Value
                 }
@@ -29,7 +29,7 @@ public sealed class DocxPageRenderer(
         {
             OpenXmlElement child = element switch
             {
-                BoxLayout box => BoxRenderer.RenderBox(box)
+                TextBoxLayout box => BoxRenderer.RenderBox(box)
             };
 
             body.AppendChild(child);

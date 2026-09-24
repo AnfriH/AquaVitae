@@ -3,7 +3,7 @@ using AquaVitae.Layouts.Types;
 
 namespace AquaVitae.Layouts;
 
-public sealed class BoxLayout(PrintPoint x, PrintPoint y, PrintPoint width, PrintPoint height) : PageElementLayoutBase
+public sealed class TextBoxLayout(PrintPoint x, PrintPoint y, PrintPoint width, PrintPoint height) : ElementLayoutBase
 {
     public override PrintPoint X => x;
     public override PrintPoint Y => y;
