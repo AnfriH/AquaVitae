@@ -1,7 +1,6 @@
 using AquaVitae.Common;
 using AquaVitae.Layouts;
 using AquaVitae.Layouts.Styles;
-using AquaVitae.Layouts.Styles.Lists;
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Wordprocessing;
 
@@ -31,38 +30,38 @@ public class DocxNumberingRenderer
 
         if (!entry.Levels.Add(level)) return entry.NumberId;
         
-        var left = style.Indentation * level;
+        // var left = style.Indentation * level;
         
-        var markerStyle = style.MarkerStyle;
-        
-        var levelElement = new Level
-        {
-            // TODO: Currently, we're just directly injecting docx primitives,
-            //  which isn't portable with other output formats.
-            LevelText = new LevelText { Val = markerStyle.GetStyle(level) },
-            LevelIndex = level,
-            LevelSuffix = new LevelSuffix { Val = LevelSuffixValues.Space },
-            LevelJustification = new LevelJustification { Val = LevelJustificationValues.Left },
-            PreviousParagraphProperties = new PreviousParagraphProperties
-            {
-                Indentation = new Indentation
-                {
-                    Left = left.ToTwipsString()
-                }
-            }
-        };
+        // var markerStyle = style.MarkerStyle;
+        //
+        // var levelElement = new Level
+        // {
+        //     // TODO: Currently, we're just directly injecting docx primitives,
+        //     //  which isn't portable with other output formats.
+        //     LevelText = new LevelText { Val = markerStyle.GetStyle(level) },
+        //     LevelIndex = level,
+        //     LevelSuffix = new LevelSuffix { Val = LevelSuffixValues.Space },
+        //     LevelJustification = new LevelJustification { Val = LevelJustificationValues.Left },
+        //     PreviousParagraphProperties = new PreviousParagraphProperties
+        //     {
+        //         Indentation = new Indentation
+        //         {
+        //             // Left = left.ToTwipsString()
+        //         }
+        //     }
+        // };
 
-        if (markerStyle.Ordered)
-        {
-            levelElement.NumberingFormat = new NumberingFormat { Val = NumberFormatValues.Decimal };
-            levelElement.StartNumberingValue = new StartNumberingValue { Val = 1 };
-        }
-        else
-        {
-            levelElement.NumberingFormat = new NumberingFormat { Val = NumberFormatValues.Bullet };
-        }
-
-        entry.Element.AppendChild(levelElement);
+        // if (markerStyle.Ordered)
+        // {
+        //     levelElement.NumberingFormat = new NumberingFormat { Val = NumberFormatValues.Decimal };
+        //     levelElement.StartNumberingValue = new StartNumberingValue { Val = 1 };
+        // }
+        // else
+        // {
+        //     levelElement.NumberingFormat = new NumberingFormat { Val = NumberFormatValues.Bullet };
+        // }
+        //
+        // entry.Element.AppendChild(levelElement);
 
         return entry.NumberId;
     }
@@ -77,7 +76,7 @@ public class DocxNumberingRenderer
         }
 
         // If we're unordered, we can reuse the existing numbering instance
-        if (!style.MarkerStyle.Ordered) return entry;
+        // if (!style.MarkerStyle.Ordered) return entry;
         
         // Otherwise, we're ordered, therefore we need to create a new instance
         AppendNumberingInstance(_numberId++, entry.AbstractId);

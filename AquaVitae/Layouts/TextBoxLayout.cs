@@ -15,6 +15,7 @@ public sealed class TextBoxLayout(PrintPoint x, PrintPoint y, PrintPoint width, 
     
     public Color? FillColor { get; init; }
     public Margins InnerMargins { get; init; } = Margins.Zero;
+    public PrintPoint ParagraphSpacing { get; init; } = 0;
     
     public void AddParagraph(ParagraphLayoutBase paragraph) => _paragraphs.Add(paragraph);
 }
