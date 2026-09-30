@@ -8,7 +8,7 @@ namespace AquaVitae.Render.Docx;
 
 public sealed class DocxDocumentRenderer : IDocumentRenderer
 {
-    private readonly DocxStylesRenderer _stylesRenderer = new();
+    // private readonly DocxStylesRenderer _stylesRenderer = new();
     
     public Task RenderDocumentAsync(DocumentLayout document, Stream outputStream)
     {
@@ -29,7 +29,7 @@ public sealed class DocxDocumentRenderer : IDocumentRenderer
     private void RenderStyles(DocumentLayout document, MainDocumentPart mainPart)
     {
         var stylesPart = mainPart.AddNewPart<StyleDefinitionsPart>();
-        stylesPart.Styles = _stylesRenderer.RenderStyles(document);
+        // stylesPart.Styles = _stylesRenderer.RenderStyles(document);
     }
 
     private void RenderBody(DocumentLayout document, MainDocumentPart mainPart)

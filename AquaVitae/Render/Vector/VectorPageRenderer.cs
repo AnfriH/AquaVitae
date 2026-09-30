@@ -8,7 +8,11 @@ public class VectorPageRenderer(
     DocumentLayout documentLayout
 )
 {
-    private VectorTextBoxRenderer TextBoxRenderer => field ??= new VectorTextBoxRenderer(documentRenderer, documentLayout);
+    private VectorStyleRenderer VectorStyleRenderer => field ??= new VectorStyleRenderer(documentLayout.Styles);
+    private VectorTextBoxRenderer TextBoxRenderer => field ??= new VectorTextBoxRenderer(
+        new ParagraphRenderer(VectorStyleRenderer),
+        VectorStyleRenderer
+    );
     
     public Page RenderPage(PageLayout pageLayout)
     {
