@@ -1,3 +1,5 @@
+using AquaVitae.Layouts.Styles;
+
 namespace AquaVitae.Layouts;
 
-public sealed class RunLayout(string text) : RunLayoutBase(text);
+public sealed class RunLayout(string text, StyleId<RunStyle> style) : RunLayoutBase(text, style);

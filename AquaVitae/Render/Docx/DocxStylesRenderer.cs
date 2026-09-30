@@ -15,40 +15,41 @@ public sealed class DocxStylesRenderer
     
     public Styles RenderStyles(DocumentLayout document)
     {
+        // TODO: Fix this method. It's no longer relevant, as styles have changed their implementation
         var stylesElement = new Styles();
-        
-        foreach (var style in document.RunStyles.Values)
-        {
-            var styleElement = stylesElement.AppendChild(CreateBaseStyle(style.Name, style.Id, StyleValues.Character));
-            styleElement.StyleRunProperties = CreateRunStyleLayout(style);
-            _runStyles[style.Id] = styleElement.StyleRunProperties;
-        }
-
-        foreach (var style in document.ParagraphStyles.Values)
-        {
-            var styleElement = stylesElement.AppendChild(
-                CreateBaseStyle(style.Name, style.Id!, StyleValues.Paragraph)
-            );
-            styleElement.StyleParagraphProperties = CreateParagraphStyleLayout(style);
-
-            if (style.RunId.Value == null) continue;
-            
-            // If the paragraph style has a run style, we create a base paragraph style
-            // for it to inherit the run style from. This reduces the XML size a fair bit.
-            // TODO: Consider allowing styles to inherit from other styles explicitly
-            var runStyle = _runStyles[style.RunId.Value!];
-            
-            var baseId = style.RunId + "_BASE";
-            if (_runStyleParagraphBases.Add(baseId))
-            {
-                var runBaseElement = stylesElement.AppendChild(
-                    CreateBaseStyle(baseId + " Base", baseId, StyleValues.Paragraph)
-                );
-                runBaseElement.StyleRunProperties = (StyleRunProperties)runStyle.CloneNode(true);
-            }
-            
-            styleElement.BasedOn = new BasedOn { Val = baseId };
-        }
+        //
+        // foreach (var style in document.Styles.RunStyles.Values)
+        // {
+        //     var styleElement = stylesElement.AppendChild(CreateBaseStyle(style.Name, style.Id, StyleValues.Character));
+        //     styleElement.StyleRunProperties = CreateRunStyleLayout(style);
+        //     _runStyles[style.Id] = styleElement.StyleRunProperties;
+        // }
+        //
+        // foreach (var style in document.ParagraphStyles.Values)
+        // {
+        //     var styleElement = stylesElement.AppendChild(
+        //         CreateBaseStyle(style.Name, style.Id!, StyleValues.Paragraph)
+        //     );
+        //     styleElement.StyleParagraphProperties = CreateParagraphStyleLayout(style);
+        //
+        //     if (style.RunId.Value == null) continue;
+        //     
+        //     // If the paragraph style has a run style, we create a base paragraph style
+        //     // for it to inherit the run style from. This reduces the XML size a fair bit.
+        //     // TODO: Consider allowing styles to inherit from other styles explicitly
+        //     var runStyle = _runStyles[style.RunId.Value!];
+        //     
+        //     var baseId = style.RunId + "_BASE";
+        //     if (_runStyleParagraphBases.Add(baseId))
+        //     {
+        //         var runBaseElement = stylesElement.AppendChild(
+        //             CreateBaseStyle(baseId + " Base", baseId, StyleValues.Paragraph)
+        //         );
+        //         runBaseElement.StyleRunProperties = (StyleRunProperties)runStyle.CloneNode(true);
+        //     }
+        //     
+        //     styleElement.BasedOn = new BasedOn { Val = baseId };
+        // }
 
         return stylesElement;
     }

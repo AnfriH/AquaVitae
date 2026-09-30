@@ -1,5 +1,4 @@
 ﻿using System.Runtime.CompilerServices;
-using System.Text;
 using AquaVitae.Layouts;
 using AquaVitae.Layouts.Types;
 using AquaVitae.Render.Vector;

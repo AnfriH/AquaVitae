@@ -1,5 +1,6 @@
 using AquaVitae.Common;
 using AquaVitae.Layouts;
+using AquaVitae.Layouts.Styles;
 using AquaVitae.Layouts.Styles.Lists;
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Wordprocessing;
@@ -23,11 +24,9 @@ public class DocxNumberingRenderer
         _numberingElement = numberingPart.Numbering;
     }
     
-    public int GetNumberingId(string? styleId, int level)
+    public int GetNumberingId(StyleId<VerticalListStyle> styleId, int level)
     {
-        if (styleId == null) return 0;
-        
-        var style = _document.VerticalListStyles[styleId];
+        var style = _document.Styles.GetStyle(styleId);
         var entry = GetAbstractEntry(style);
 
         if (!entry.Levels.Add(level)) return entry.NumberId;

@@ -1,6 +1,12 @@
+using AquaVitae.Layouts.Styles;
+
 namespace AquaVitae.Layouts;
 
-public class HyperlinkLayout(Uri uri, string? text = null) : RunLayoutBase(text ?? uri.ToString())
+public sealed class HyperlinkLayout(
+    Uri uri,
+    StyleId<RunStyle> style,
+    string? text = null
+) : RunLayoutBase(text ?? uri.ToString(), style)
 {
     public Uri Uri => uri;
 }
