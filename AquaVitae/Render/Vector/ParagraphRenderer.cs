@@ -66,6 +66,7 @@ public sealed class ParagraphRenderer(VectorStyleRenderer styleRenderer) : Markd
         {
             var vertStyle = styleRenderer.GetStyle(vertId);
             context.Colour = vertStyle.ElementColor.ToVectSharpColor();
+            IndentWidth = vertStyle.Indent.Points;
         }
     }
 }

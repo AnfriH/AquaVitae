@@ -1,7 +1,4 @@
-using System.Runtime.InteropServices.ComTypes;
 using AquaVitae.Layouts;
-using AquaVitae.Layouts.Styles;
-using AquaVitae.Layouts.Types;
 using Markdig.Parsers;
 using Markdig.Syntax;
 using Markdig.Syntax.Inlines;
@@ -93,7 +90,7 @@ public class VectorTextBoxRenderer(
         {
             var listItem = new ListItemBlock(parser)
             {
-                Order = i++,
+                Order = i++
             };
             listItem.Add(RenderParagraphBase(paragraphLayout));
             list.Add(listItem);
