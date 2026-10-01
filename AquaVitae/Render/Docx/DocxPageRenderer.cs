@@ -28,7 +28,12 @@ public sealed class DocxPageRenderer(
         if (pageSvg != null)
         {
             var drawing = svgRenderer.RenderSvg(page, pageSvg);
-            body.AppendChild(new Paragraph(new Run(drawing)));
+            if (body.LastChild is not Paragraph paragraph)
+            {
+                paragraph = body.AppendChild(new Paragraph());
+            }
+            
+            paragraph.AppendChild(new Run(drawing));
         }
         
         RenderPageFormatting(page, body, finalPage);
