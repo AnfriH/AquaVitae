@@ -6,62 +6,61 @@ using DocumentFormat.OpenXml.Wordprocessing;
 
 namespace AquaVitae.Render.Docx;
 
-public class DocxNumberingRenderer
+public class DocxNumberingRenderer(DocumentLayout document, MainDocumentPart documentPart)
 {
-    private readonly DocumentLayout _document;
-    private readonly Numbering _numberingElement;
+    private Numbering NumberingElement
+    {
+        get {
+            if (field != null) return field;
+            field = new Numbering();
+            
+            var numberingPart = documentPart.AddNewPart<NumberingDefinitionsPart>();
+            numberingPart.Numbering = field;
+            return field;
+        }
+    }
     private OptionalDictionary<string, AbstractNumEntry> _abstractEntries;
     
     private int _abstractId = 1;
     private int _numberId = 1;
-
-    public DocxNumberingRenderer(DocumentLayout document, MainDocumentPart documentPart)
-    {
-        _document = document;
-        var numberingPart = documentPart.AddNewPart<NumberingDefinitionsPart>();
-        numberingPart.Numbering = new Numbering();
-        _numberingElement = numberingPart.Numbering;
-    }
     
     public int GetNumberingId(StyleId<VerticalListStyle> styleId, int level)
     {
-        var style = _document.Styles.GetStyle(styleId);
+        var style = document.Styles.GetStyle(styleId);
         var entry = GetAbstractEntry(style);
 
         if (!entry.Levels.Add(level)) return entry.NumberId;
         
-        // var left = style.Indentation * level;
+        var left = style.Indent * level;
         
-        // var markerStyle = style.MarkerStyle;
-        //
-        // var levelElement = new Level
-        // {
-        //     // TODO: Currently, we're just directly injecting docx primitives,
-        //     //  which isn't portable with other output formats.
-        //     LevelText = new LevelText { Val = markerStyle.GetStyle(level) },
-        //     LevelIndex = level,
-        //     LevelSuffix = new LevelSuffix { Val = LevelSuffixValues.Space },
-        //     LevelJustification = new LevelJustification { Val = LevelJustificationValues.Left },
-        //     PreviousParagraphProperties = new PreviousParagraphProperties
-        //     {
-        //         Indentation = new Indentation
-        //         {
-        //             // Left = left.ToTwipsString()
-        //         }
-        //     }
-        // };
+        var ordered = style.Ordered;
+        
+        var levelElement = new Level
+        {
+            LevelText = new LevelText { Val = ordered ? $"%{level}." : "•" },
+            LevelIndex = level,
+            LevelSuffix = new LevelSuffix { Val = LevelSuffixValues.Space },
+            LevelJustification = new LevelJustification { Val = LevelJustificationValues.Left },
+            PreviousParagraphProperties = new PreviousParagraphProperties
+            {
+                Indentation = new Indentation
+                {
+                    Left = left.ToTwipsString()
+                }
+            }
+        };
 
-        // if (markerStyle.Ordered)
-        // {
-        //     levelElement.NumberingFormat = new NumberingFormat { Val = NumberFormatValues.Decimal };
-        //     levelElement.StartNumberingValue = new StartNumberingValue { Val = 1 };
-        // }
-        // else
-        // {
-        //     levelElement.NumberingFormat = new NumberingFormat { Val = NumberFormatValues.Bullet };
-        // }
-        //
-        // entry.Element.AppendChild(levelElement);
+        if (ordered)
+        {
+            levelElement.NumberingFormat = new NumberingFormat { Val = NumberFormatValues.Decimal };
+            levelElement.StartNumberingValue = new StartNumberingValue { Val = 1 };
+        }
+        else
+        {
+            levelElement.NumberingFormat = new NumberingFormat { Val = NumberFormatValues.Bullet };
+        }
+        
+        entry.Element.AppendChild(levelElement);
 
         return entry.NumberId;
     }
@@ -89,7 +88,7 @@ public class DocxNumberingRenderer
         {
             AbstractNumberId = abstractId
         };
-        _numberingElement.AppendChild(element);
+        NumberingElement.AppendChild(element);
         
         AppendNumberingInstance(numberId, abstractId);
 
@@ -107,7 +106,7 @@ public class DocxNumberingRenderer
             AbstractNumId = new AbstractNumId { Val = abstractId },
             NumberID = numberId
         };
-        _numberingElement.AppendChild(element);
+        NumberingElement.AppendChild(element);
     }
 
     private class AbstractNumEntry(AbstractNum element, int abstractId, int numberId)

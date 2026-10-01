@@ -26,10 +26,10 @@ public sealed class VectorStyleRenderer(StyleLayout styleLayout)
 
         var fontPath = (runStyle.Bold, runStyle.Italic) switch
         {
-            (false, false) => fontStyle.Regular,
-            (true, false) => fontStyle.Bold,
-            (false, true) => fontStyle.Italic,
-            (true, true) => fontStyle.BoldItalic
+            (false, false) => fontStyle.RegularFile,
+            (true, false) => fontStyle.BoldFile,
+            (false, true) => fontStyle.ItalicFile,
+            (true, true) => fontStyle.BoldItalicFile
         };
         
         if (fontPath == null) throw new NullReferenceException(nameof(fontPath));

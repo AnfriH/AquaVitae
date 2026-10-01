@@ -5,34 +5,23 @@ using DocumentFormat.OpenXml.Wordprocessing;
 namespace AquaVitae.Render.Docx;
 
 public sealed class DocxPageRenderer(
-    Lazy<DocxNumberingRenderer> numberingRenderer,
-    Lazy<DocxHyperlinkRenderer> hyperlinkRenderer
+    DocxNumberingRenderer numberingRenderer,
+    DocxHyperlinkRenderer hyperlinkRenderer,
+    DocxStylesRenderer stylesRenderer
 )
 {
-    private DocxBoxRenderer BoxRenderer => field ??= new DocxBoxRenderer(numberingRenderer, hyperlinkRenderer);
+    private DocxBoxRenderer BoxRenderer => field ??= new DocxBoxRenderer(numberingRenderer, hyperlinkRenderer, stylesRenderer);
     
     public void RenderPage(PageLayout page, Body body, bool finalPage)
     {
-        var fillColor = page.FillColor;
-        if (fillColor != null)
-        {
-            var box = BoxRenderer.RenderBox(
-                new TextBoxLayout(0, 0, page.PageSize.Width, page.PageSize.Height)
-                {
-                    FillColor = fillColor.Value
-                }
-            );
-            body.AppendChild(box);
-        }
-        
         foreach (var element in page.PageElements)
         {
-            OpenXmlElement child = element switch
+            switch (element)
             {
-                TextBoxLayout box => BoxRenderer.RenderBox(box)
-            };
-
-            body.AppendChild(child);
+                case TextBoxLayout textBox:
+                    BoxRenderer.RenderBox(textBox, body);
+                    break;
+            }
         }
         
         RenderPageFormatting(page, body, finalPage);
@@ -56,18 +45,17 @@ public sealed class DocxPageRenderer(
         sectionProperties.AppendChild(pageSize);
         
         // Set margin sizes to 0
-        // TODO: Make customisable
-        var pageMargin = new PageMargin
-        {
-            Top = 0,
-            Left = 0,
-            Right = 0,
-            Bottom = 0,
-            Header = 0,
-            Footer = 0,
-            Gutter = 0
-        };
-        sectionProperties.AppendChild(pageMargin);
+        // var pageMargin = new PageMargin
+        // {
+        //     Top = 0,
+        //     Left = 0,
+        //     Right = 0,
+        //     Bottom = 0,
+        //     Header = 0,
+        //     Footer = 0,
+        //     Gutter = 0
+        // };
+        // sectionProperties.AppendChild(pageMargin);
         
         // We include a final paragraph to ensure that every page has at least one non-floating element.
         // Without this, the layout engine tends to munge the last two pages together.

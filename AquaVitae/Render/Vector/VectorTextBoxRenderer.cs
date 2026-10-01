@@ -8,7 +8,7 @@ using Margins = VectSharp.Markdown.Margins;
 namespace AquaVitae.Render.Vector;
 
 public class VectorTextBoxRenderer(
-    ParagraphRenderer paragraphRenderer,
+    VectorParagraphRenderer paragraphRenderer,
     VectorStyleRenderer styleRenderer
 )
 {

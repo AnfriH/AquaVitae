@@ -4,7 +4,10 @@ using DocumentFormat.OpenXml.Wordprocessing;
 
 namespace AquaVitae.Render.Docx;
 
-public class DocxParagraphRenderer(Lazy<DocxHyperlinkRenderer> hyperlinkRenderer)
+public class DocxParagraphRenderer(
+    DocxHyperlinkRenderer hyperlinkRenderer,
+    DocxStylesRenderer stylesRenderer
+)
 {
     public Paragraph RenderParagraph(ParagraphLayout paragraph)
     {
@@ -20,33 +23,33 @@ public class DocxParagraphRenderer(Lazy<DocxHyperlinkRenderer> hyperlinkRenderer
             paragraphElement.AppendChild(element);
         }
 
-        if (!paragraph.Style.IsNone)
+        stylesRenderer.AddParagraphStyle(paragraph.Style);
+            
+        paragraphElement.ParagraphProperties = new ParagraphProperties
         {
-            paragraphElement.ParagraphProperties = new ParagraphProperties
-            {
-                ParagraphStyleId = new ParagraphStyleId { Val = paragraph.Style.Value }
-            };
-        }
+            ParagraphStyleId = new ParagraphStyleId { Val = paragraph.Style.Value }
+        };
         
         return paragraphElement;
     }
 
-    private static Run CreateRun(RunLayoutBase layout)
+    private Run CreateRun(RunLayoutBase layout)
     {
-        var runElement = new Run(new Text(layout.Text));
-        if (!layout.Style.IsNone)
+        stylesRenderer.AddRunStyle(layout.Style);
+        
+        var runElement = new Run(new Text(layout.Text))
         {
-            runElement.RunProperties = new RunProperties
+            RunProperties = new RunProperties
             {
                 RunStyle = new RunStyle { Val = layout.Style.Value }
-            };
-        }
+            }
+        };
         return runElement;
     }
 
     private Hyperlink CreateHyperlink(HyperlinkLayout layout)
     {
-        var relId = hyperlinkRenderer.Value.AddHyperlink(layout.Uri);
+        var relId = hyperlinkRenderer.AddHyperlink(layout.Uri);
         
         var hyperlinkElement = new Hyperlink
         {

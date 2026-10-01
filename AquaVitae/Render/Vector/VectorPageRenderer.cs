@@ -10,7 +10,7 @@ public class VectorPageRenderer(
 {
     private VectorStyleRenderer VectorStyleRenderer => field ??= new VectorStyleRenderer(documentLayout.Styles);
     private VectorTextBoxRenderer TextBoxRenderer => field ??= new VectorTextBoxRenderer(
-        new ParagraphRenderer(VectorStyleRenderer),
+        new VectorParagraphRenderer(VectorStyleRenderer),
         VectorStyleRenderer
     );
     

@@ -6,7 +6,7 @@ using VectSharp.Markdown;
 
 namespace AquaVitae.Render.Vector;
 
-public sealed class ParagraphRenderer(VectorStyleRenderer styleRenderer) : MarkdownRenderer
+public sealed class VectorParagraphRenderer(VectorStyleRenderer styleRenderer) : MarkdownRenderer
 {
     private readonly Dictionary<Inline, StyleId<RunStyle>> _runStyles = new(ReferenceEqualityComparer.Instance);
     private readonly Dictionary<Block, StyleId<ParagraphStyle>> _paragraphStyles = new(ReferenceEqualityComparer.Instance);
@@ -40,8 +40,18 @@ public sealed class ParagraphRenderer(VectorStyleRenderer styleRenderer) : Markd
     )
     {
         base.OnInlineRendering(ref context, ref graphics, ref inline);
-        if (!_runStyles.TryGetValue(inline, out var styleId)) return;
-        
+        if (_runStyles.TryGetValue(inline, out var styleId)) ApplyRunStyle(styleId, ref context);
+    }
+
+    protected override void OnBlockRendering(ref MarkdownContext context, ref Graphics graphics, ref Block block)
+    {
+        base.OnBlockRendering(ref context, ref graphics, ref block);
+        if (_paragraphStyles.TryGetValue(block, out var paraId)) ApplyParagraphStyle(paraId, ref context);
+        if (_verticalListStyles.TryGetValue(block, out var vertId)) ApplyListStyle(vertId, ref context);
+    }
+
+    private void ApplyRunStyle(StyleId<RunStyle> styleId, ref MarkdownContext context)
+    {
         // Rather than using the actual Markdown syntax, this renderer allows us to
         // take full control over how the renderer handles text. This lets us do a
         // bunch of styling that the built-in Markdown renderer does not expose to us!
@@ -53,20 +63,20 @@ public sealed class ParagraphRenderer(VectorStyleRenderer styleRenderer) : Markd
         context.Colour = style.Color.ToVectSharpColor();
     }
 
-    protected override void OnBlockRendering(ref MarkdownContext context, ref Graphics graphics, ref Block block)
+    private void ApplyParagraphStyle(StyleId<ParagraphStyle> styleId, ref MarkdownContext context)
     {
-        base.OnBlockRendering(ref context, ref graphics, ref block);
-        if (_paragraphStyles.TryGetValue(block, out var paraId))
+        var style = styleRenderer.GetStyle(styleId);
+        SpaceAfterLine = style.LineSpacing.Points;
+        if (!style.RunStyle.IsNone)
         {
-            var paraStyle = styleRenderer.GetStyle(paraId);
-            SpaceAfterLine = paraStyle.LineSpacing.Points;
+            ApplyRunStyle(style.RunStyle, ref context);
         }
+    }
 
-        if (_verticalListStyles.TryGetValue(block, out var vertId))
-        {
-            var vertStyle = styleRenderer.GetStyle(vertId);
-            context.Colour = vertStyle.ElementColor.ToVectSharpColor();
-            IndentWidth = vertStyle.Indent.Points;
-        }
+    private void ApplyListStyle(StyleId<VerticalListStyle> styleId, ref MarkdownContext context)
+    {
+        var style = styleRenderer.GetStyle(styleId);
+        context.Colour = style.ElementColor.ToVectSharpColor();
+        IndentWidth = style.Indent.Points;
     }
 }

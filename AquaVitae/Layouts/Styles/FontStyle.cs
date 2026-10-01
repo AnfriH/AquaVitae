@@ -7,8 +7,8 @@ public sealed record FontStyle(
     string Id
 ) : IStyle
 {
-    public string? Regular { get; init; }
-    public string? Bold { get; init; }
-    public string? Italic { get; init; }
-    public string? BoldItalic { get; init; }
+    public string? RegularFile { get; init; }
+    public string? BoldFile { get; init; }
+    public string? ItalicFile { get; init; }
+    public string? BoldItalicFile { get; init; }
 }

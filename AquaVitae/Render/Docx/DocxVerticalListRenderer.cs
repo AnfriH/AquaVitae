@@ -10,7 +10,7 @@ public sealed class DocxVerticalListRenderer(DocxNumberingRenderer numberingRend
     {
         if (verticalList.Paragraphs.Count == 0) return;
         
-        var numberingId = numberingRenderer.GetNumberingId(default, level);
+        var numberingId = numberingRenderer.GetNumberingId(verticalList.ListStyle, level);
 
         foreach (var child in verticalList.Paragraphs)
         {
