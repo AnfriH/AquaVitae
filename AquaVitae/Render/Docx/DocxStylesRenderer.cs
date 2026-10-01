@@ -8,7 +8,11 @@ using RunStyle = AquaVitae.Layouts.Styles.RunStyle;
 
 namespace AquaVitae.Render.Docx;
 
-public sealed class DocxStylesRenderer(DocumentLayout documentLayout, MainDocumentPart mainPart)
+public sealed class DocxStylesRenderer(
+    DocumentLayout documentLayout,
+    MainDocumentPart mainPart,
+    DocxRendererSettings settings
+)
 {
     private readonly Dictionary<string, Style> _runStyles = new();
     private readonly Dictionary<string, Style> _paragraphStyles = new();
@@ -118,7 +122,11 @@ public sealed class DocxStylesRenderer(DocumentLayout documentLayout, MainDocume
         };
         
         properties.FontSize = new FontSize { Val = style.FontSize.ToHalfPointsString() };
-        properties.Color = new Color { Val = style.Color.ToString(ColorFormats.Rgb) };
+
+        if (settings.IncludeTextColor)
+        {
+            properties.Color = new Color { Val = style.Color.ToString(ColorFormats.Rgb) };
+        }
         
         if (style.Bold) properties.Bold = new Bold { Val = true };
         if (style.Italic) properties.Italic = new Italic { Val = true };

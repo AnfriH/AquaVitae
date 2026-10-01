@@ -30,10 +30,7 @@ public class VectorPageRenderer(
             }
         }
         
-        if (pageLayout.FillColor.HasValue)
-        {
-            page.Background = pageLayout.FillColor.Value.ToVectSharpColor();
-        }
+        page.Background = pageLayout.FillColor?.ToVectSharpColor() ?? Colour.FromRgb(255, 255, 255);
         
         return page;
     }
