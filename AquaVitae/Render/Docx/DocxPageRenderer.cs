@@ -1,5 +1,5 @@
+using System.Xml;
 using AquaVitae.Layouts;
-using DocumentFormat.OpenXml;
 using DocumentFormat.OpenXml.Wordprocessing;
 
 namespace AquaVitae.Render.Docx;
@@ -7,12 +7,13 @@ namespace AquaVitae.Render.Docx;
 public sealed class DocxPageRenderer(
     DocxNumberingRenderer numberingRenderer,
     DocxHyperlinkRenderer hyperlinkRenderer,
-    DocxStylesRenderer stylesRenderer
+    DocxStylesRenderer stylesRenderer,
+    DocxSvgRenderer svgRenderer
 )
 {
     private DocxBoxRenderer BoxRenderer => field ??= new DocxBoxRenderer(numberingRenderer, hyperlinkRenderer, stylesRenderer);
     
-    public void RenderPage(PageLayout page, Body body, bool finalPage)
+    public void RenderPage(PageLayout page, Body body, bool finalPage, XmlDocument? pageSvg)
     {
         foreach (var element in page.PageElements)
         {
@@ -23,10 +24,16 @@ public sealed class DocxPageRenderer(
                     break;
             }
         }
+
+        if (pageSvg != null)
+        {
+            var drawing = svgRenderer.RenderSvg(page, pageSvg);
+            body.AppendChild(new Paragraph(new Run(drawing)));
+        }
         
         RenderPageFormatting(page, body, finalPage);
     }
-    
+
     private static void RenderPageFormatting(PageLayout page, Body body, bool finalPage)
     {
         var sectionProperties = new SectionProperties();
