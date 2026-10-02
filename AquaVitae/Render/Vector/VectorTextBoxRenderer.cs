@@ -40,6 +40,7 @@ public class VectorTextBoxRenderer(
             margins.Right.Points,
             margins.Bottom.Points
         );
+        paragraphRenderer.SpaceAfterParagraph = textBoxLayout.ParagraphSpacing.Points;
         
         var document = new MarkdownDocument();
         foreach (var paragraphLayout in textBoxLayout.Paragraphs)

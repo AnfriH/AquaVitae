@@ -100,11 +100,15 @@ public sealed class DocxStylesRenderer(
         var properties = new StyleParagraphProperties
         {
             Justification = new Justification { Val = JustificationValues.Left },
-            SpacingBetweenLines = new SpacingBetweenLines
+        };
+        
+        if (style.LineSpacing.Points > 0)
+        {
+            properties.SpacingBetweenLines = new SpacingBetweenLines
             {
                 Before = style.LineSpacing.ToTwipsString()
-            }
-        };
+            };
+        }
         
         return properties;
     }

@@ -11,16 +11,34 @@ public sealed class DocxPageRenderer(
     DocxSvgRenderer svgRenderer
 )
 {
-    private DocxBoxRenderer BoxRenderer => field ??= new DocxBoxRenderer(numberingRenderer, hyperlinkRenderer, stylesRenderer);
+    private DocxParagraphRenderer ParagraphRenderer => field ??= new DocxParagraphRenderer(hyperlinkRenderer, stylesRenderer);
+    private DocxVerticalListRenderer VerticalListRenderer => field ??= new DocxVerticalListRenderer(numberingRenderer, ParagraphRenderer);
     
     public void RenderPage(PageLayout page, Body body, bool finalPage, XmlDocument? pageSvg)
     {
+        var paragraphs = new List<ParagraphLayoutBase>();
+        
         foreach (var element in page.PageElements)
         {
             switch (element)
             {
                 case TextBoxLayout textBox:
-                    BoxRenderer.RenderBox(textBox, body);
+                    // Direct passthrough to paragraphs. We don't insert boxes in the underlying layout text
+                    // because MS Word breaks floating elements, and they end up smushed together on the left margin.
+                    paragraphs.AddRange(textBox.Paragraphs);
+                    break;
+            }
+        }
+
+        foreach (var paragraphLayout in paragraphs.OrderBy(p => p))
+        {
+            switch (paragraphLayout)
+            {
+                case ParagraphLayout paragraph:
+                    body.AppendChild(ParagraphRenderer.RenderParagraph(paragraph));
+                    break;
+                case VerticalListLayout vertList:
+                    VerticalListRenderer.RenderVerticalList(vertList, body);
                     break;
             }
         }
@@ -28,11 +46,7 @@ public sealed class DocxPageRenderer(
         if (pageSvg != null)
         {
             var drawing = svgRenderer.RenderSvg(page, pageSvg);
-            if (body.LastChild is not Paragraph paragraph)
-            {
-                paragraph = body.AppendChild(new Paragraph());
-            }
-            
+            var paragraph = body.AppendChild(new Paragraph());
             paragraph.AppendChild(new Run(drawing));
         }
         

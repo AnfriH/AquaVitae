@@ -69,6 +69,7 @@ public sealed class VectorParagraphRenderer(VectorStyleRenderer styleRenderer) :
         SpaceAfterLine = style.LineSpacing.Points;
         if (!style.RunStyle.IsNone)
         {
+            // FIXME: This currently gets overriden completely if any child style is applied
             ApplyRunStyle(style.RunStyle, ref context);
         }
     }
