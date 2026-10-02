@@ -38,6 +38,11 @@ public readonly struct Color : IEquatable<Color>
         Raw = BitConverter.IsLittleEndian ? color : BinaryPrimitives.ReverseEndianness(color);
     }
     
+    public Color WithAlpha(byte alpha)
+    {
+        return new Color(Red, Green, Blue, alpha);
+    }
+    
     public override int GetHashCode()
     {
         return unchecked((int)Raw);
@@ -131,4 +136,30 @@ public enum ColorFormats
     Argb = 2,
     Bgra = 3,
     Bgr = 4
+}
+
+/// <summary>
+/// Commonly used base colors. These are pulled straight from the CSS 2.2 specification.
+/// </summary>
+/// <seealso href="https://www.w3.org/TR/CSS22/syndata.html#color-units"/>
+public static class Colors
+{
+    // The hex values are encoded using ARGB
+    public static readonly Color Maroon = new(0xFF800000);
+    public static readonly Color Red = new(0xFFFF0000);
+    public static readonly Color Orange = new(0xFFFFA500);
+    public static readonly Color Yellow = new(0xFFFFFF00);
+    public static readonly Color Olive = new(0xFF808000);
+    public static readonly Color Purple = new(0xFF800080);
+    public static readonly Color Fuchsia = new(0xFFFF00FF);
+    public static readonly Color White = new(0xFFFFFFFF);
+    public static readonly Color Lime = new(0xFF00FF00);
+    public static readonly Color Green = new(0xFF008000);
+    public static readonly Color Navy = new(0xFF000080);
+    public static readonly Color Blue = new(0xFF0000FF);
+    public static readonly Color Aqua = new(0xFF00FFFF);
+    public static readonly Color Teal = new(0xFF008080);
+    public static readonly Color Black = new(0xFF000000);
+    public static readonly Color Silver = new(0xFFC0C0C0);
+    public static readonly Color Gray = new(0xFF808080);
 }
