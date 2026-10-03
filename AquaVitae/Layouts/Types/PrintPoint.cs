@@ -7,6 +7,8 @@ namespace AquaVitae.Layouts.Types;
 /// <param name="Points"></param>
 public readonly record struct PrintPoint(float Points) : IComparable<PrintPoint>
 {
+    public static PrintPoint Zero => new(0);
+    
     private const int PointsPerInch = 72;
     private const float MillimetersPerInch = 25.4f;
     private const float MillimetersPerPoint = MillimetersPerInch / PointsPerInch;

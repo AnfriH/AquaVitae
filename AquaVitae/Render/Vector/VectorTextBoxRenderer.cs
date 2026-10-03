@@ -1,4 +1,6 @@
 using AquaVitae.Layouts;
+using AquaVitae.Layouts.Abstractions;
+using AquaVitae.Layouts.Types;
 using Markdig.Parsers;
 using Markdig.Syntax;
 using Markdig.Syntax.Inlines;
@@ -12,25 +14,38 @@ public class VectorTextBoxRenderer(
     VectorStyleRenderer styleRenderer
 )
 {
-    public void RenderTextBox(TextBoxLayout textBoxLayout, Graphics graphics)
+    public PrintPoint RenderTextBox(TextBoxLayout textBoxLayout, Graphics graphics, PrintPoint width)
     {
+        var textGraphics = textBoxLayout.Paragraphs.Count > 0 
+            ? RenderParagraphs(textBoxLayout, width) 
+            : null;
+
+        var actualHeight = textGraphics != null 
+            ? new PrintPoint((float)textGraphics.Height) 
+            : PrintPoint.Zero;
+        
         if (textBoxLayout.FillColor.HasValue)
         {
             var fillColor = textBoxLayout.FillColor.Value;
             
             graphics.FillRectangle(
-                textBoxLayout.X.Points,
-                textBoxLayout.Y.Points,
-                textBoxLayout.Width.Points,
-                textBoxLayout.Height.Points,
+                0,
+                0,
+                width.Points,
+                actualHeight.Points,
                 fillColor.ToVectSharpColor()
             );
         }
         
-        if (textBoxLayout.Paragraphs.Count > 0) RenderParagraphs(textBoxLayout, graphics);
+        if (textGraphics != null)
+        {
+            graphics.DrawGraphics(0, 0, textGraphics.Graphics);
+        }
+
+        return actualHeight;
     }
 
-    private void RenderParagraphs(TextBoxLayout textBoxLayout, Graphics graphics)
+    private Page RenderParagraphs(TextBoxLayout textBoxLayout, PrintPoint width)
     {
         var margins = textBoxLayout.InnerMargins;
         
@@ -50,17 +65,13 @@ public class VectorTextBoxRenderer(
         
         var innerPage = paragraphRenderer.RenderSinglePage(
             document,
-            textBoxLayout.Width.Points,
+            width.Points,
             out _,
             out _
         );
         
         paragraphRenderer.Clear();
-        
-        graphics.DrawGraphics(
-            new Point(textBoxLayout.X.Points, textBoxLayout.Y.Points),
-            innerPage.Graphics
-        );
+        return innerPage;
     }
 
     private Block RenderParagraphBase(ParagraphLayoutBase paragraphLayoutBase)

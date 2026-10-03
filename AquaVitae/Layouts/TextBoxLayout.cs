@@ -4,19 +4,21 @@ using AquaVitae.Layouts.Types;
 
 namespace AquaVitae.Layouts;
 
-public sealed class TextBoxLayout(PrintPoint x, PrintPoint y, PrintPoint width, PrintPoint height) : LayoutBase
+public sealed class TextBoxLayout : ElementLayoutBase
 {
-    public PrintPoint X => x;
-    public PrintPoint Y => y;
-    public PrintPoint Width => width;
-    public PrintPoint Height => height;
-    
     private OptionalList<ParagraphLayoutBase> _paragraphs;
     public IReadOnlyList<ParagraphLayoutBase> Paragraphs => _paragraphs.AsReadOnly();
     
     public Color? FillColor { get; init; }
     public Margins InnerMargins { get; init; } = Margins.Zero;
     public PrintPoint ParagraphSpacing { get; init; } = 0;
-    
     public void AddParagraph(ParagraphLayoutBase paragraph) => _paragraphs.Add(paragraph);
+    
+    public override void CollectParagraphs(Action<ParagraphLayoutBase> callback)
+    {
+        foreach (var paragraph in _paragraphs)
+        {
+            callback(paragraph);
+        }
+    }
 }

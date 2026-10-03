@@ -9,9 +9,15 @@ public sealed class CanvasLayout : ElementLayoutBase
     private OptionalList<PositionedElement> _elements = [];
     public IReadOnlyList<PositionedElement> Elements => _elements.AsReadOnly();
 
-    public void AddElement(ElementLayoutBase element, PrintPoint x, PrintPoint y)
+    public void AddElement(
+        ElementLayoutBase element,
+        PrintPoint x,
+        PrintPoint y,
+        PrintPoint width = default,
+        PrintPoint height = default
+    )
     {
-        _elements.Add(new PositionedElement(x, y, element));
+        _elements.Add(new PositionedElement(x, y, width, height, element));
     }
     
     public override void CollectParagraphs(Action<ParagraphLayoutBase> callback)
@@ -23,4 +29,10 @@ public sealed class CanvasLayout : ElementLayoutBase
     }
 }
 
-public readonly record struct PositionedElement(PrintPoint X, PrintPoint Y, ElementLayoutBase Element);
+public sealed record PositionedElement(
+    PrintPoint X,
+    PrintPoint Y,
+    PrintPoint Width,
+    PrintPoint Height,
+    ElementLayoutBase Element
+);
