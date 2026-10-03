@@ -5,11 +5,18 @@ using VectSharp;
 
 namespace AquaVitae.Render.Vector;
 
-public sealed class VectorElementRenderer(
-    VectorTextBoxRenderer vectorTextBoxRenderer,
-    VectorBoxRenderer vectorBoxRenderer
-)
+public sealed class VectorElementRenderer
 {
+    private readonly VectorTextBoxRenderer _textBoxRenderer;
+    private readonly VectorBoxRenderer _boxRenderer = new();
+    private readonly VectorCanvasRenderer _canvasRenderer;
+
+    public VectorElementRenderer(VectorStyleRenderer styleRenderer)
+    {
+        _textBoxRenderer = new VectorTextBoxRenderer(new VectorParagraphRenderer(styleRenderer), styleRenderer);
+        _canvasRenderer = new VectorCanvasRenderer(this);
+    }
+
     /// <summary>
     /// Renders an element to the provided graphics pane. 
     /// </summary>
@@ -36,9 +43,9 @@ public sealed class VectorElementRenderer(
         return element switch
         {
             GridLayout gridLayout => new VectorGridRenderer(this, gridLayout, width, graphics).RenderGrid(),
-            TextBoxLayout textBoxLayout => vectorTextBoxRenderer.RenderTextBox(textBoxLayout, graphics, width),
-            BoxLayout boxLayout => vectorBoxRenderer.RenderBox(boxLayout, graphics, width, height),
-            CanvasLayout canvasLayout => throw new NotImplementedException(),
+            TextBoxLayout textBoxLayout => _textBoxRenderer.RenderTextBox(textBoxLayout, graphics, width),
+            BoxLayout boxLayout => _boxRenderer.RenderBox(boxLayout, graphics, width, height),
+            CanvasLayout canvasLayout => _canvasRenderer.RenderCanvas(canvasLayout, graphics),
         };
     }
 }

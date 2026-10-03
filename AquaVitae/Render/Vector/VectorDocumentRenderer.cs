@@ -38,7 +38,9 @@ public sealed class VectorDocumentRenderer
     
     private List<Page> RenderPages(DocumentLayout documentLayout)
     {
-        var pageRenderer = new VectorPageRenderer();
+        var styles = new VectorStyleRenderer(documentLayout.Styles);
+        
+        var pageRenderer = new VectorPageRenderer(styles);
         var pageLayouts = documentLayout.Pages;
         
         var pages = new List<Page>(pageLayouts.Count);

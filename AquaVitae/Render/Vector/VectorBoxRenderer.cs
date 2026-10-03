@@ -10,11 +10,11 @@ public sealed class VectorBoxRenderer
     {
         var renderHeight = height.HasValue && height.Value < boxLayout.Height
             ? height.Value
-            : boxLayout.Height;
-        if (boxLayout.FillColor == null) return renderHeight;
+            : boxLayout.Height ?? PrintPoint.Zero;
+        if (boxLayout.FillColor == null || renderHeight.Points == 0) return renderHeight;
         
-        var renderWidth = boxLayout.Width < width 
-            ? boxLayout.Width 
+        var renderWidth = boxLayout.Width != null && boxLayout.Width.Value < width 
+            ? boxLayout.Width.Value 
             : width;
 
         graphics.FillRectangle(

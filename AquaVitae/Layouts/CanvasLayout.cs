@@ -6,6 +6,9 @@ namespace AquaVitae.Layouts;
 
 public sealed class CanvasLayout : ElementLayoutBase
 {
+    public PrintPoint? Width { get; init; }
+    public PrintPoint? Height { get; init; }
+    
     private OptionalList<PositionedElement> _elements = [];
     public IReadOnlyList<PositionedElement> Elements => _elements.AsReadOnly();
 
