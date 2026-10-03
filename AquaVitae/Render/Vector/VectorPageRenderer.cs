@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using AquaVitae.Layouts;
 using AquaVitae.Layouts.Types;
 using VectSharp;
@@ -17,6 +18,7 @@ public class VectorPageRenderer(VectorStyleRenderer styleRenderer)
 
         var actualPageHeight = 0f;
         
+        // Render the layers onto the page canvas
         var background = pageLayout.Background;
         if (background != null)
         {
@@ -25,14 +27,23 @@ public class VectorPageRenderer(VectorStyleRenderer styleRenderer)
                 _elementRenderer.CanvasRenderer.RenderCanvas(background, backgroundGraphics).Points
             );
         }
+        
         var grid = pageLayout.Grid;
         if (grid != null)
         {
             actualPageHeight = MathF.Max(
                 actualPageHeight,
-                _elementRenderer.RenderElement(grid, graphics, width, height).Points
+                new VectorGridRenderer(
+                    _elementRenderer, 
+                    grid, 
+                    width, 
+                    height, 
+                    graphics, 
+                    pageLayout.OverflowBehaviour
+                ).RenderGrid().Points
             );
         }
+        
         var foreground = pageLayout.Foreground;
         if (foreground != null)
         {
@@ -42,36 +53,50 @@ public class VectorPageRenderer(VectorStyleRenderer styleRenderer)
             );
         }
         
-        if (pageLayout.OverflowBehaviour == PageOverflowBehaviour.Scale)
+        switch (pageLayout.OverflowBehaviour)
         {
-            // In the case of a single page, we just scale the page height to fit everything
-            var pageHeight = MathF.Max(actualPageHeight, height.Points);
-            var page = new Page(width.Points, pageHeight)
+            case PageOverflowBehaviour.Scale:
             {
-                Background = pageLayout.PageColor.ToVectSharpColor()
-            };
-            var pageGraphics = page.Graphics;
-            pageGraphics.DrawGraphics(0, 0, backgroundGraphics);
-            pageGraphics.DrawGraphics(0, 0, graphics);
-            pages.Add(page);
-            return;
+                RenderSinglePage(MathF.Max(actualPageHeight, height.Points));
+                return;
+            }
+            case PageOverflowBehaviour.Truncate:
+            {
+                RenderSinglePage(height.Points);
+                return;
+            }
+            case PageOverflowBehaviour.Continuous:
+            case PageOverflowBehaviour.PageFit:
+                // Elsewise, we split the page up into multiple pieces
+                var pageCount = MathF.Ceiling(actualPageHeight / height.Points);
+                for (var i = 0; i < pageCount; i++)
+                {
+                    var page = new Page(width.Points, height.Points)
+                    {
+                        Background = pageLayout.PageColor.ToVectSharpColor()
+                    };
+                    var pageGraphics = page.Graphics;
+            
+                    // We repeat the background graphics for every page
+                    pageGraphics.DrawGraphics(0, 0, backgroundGraphics);
+                    pageGraphics.DrawGraphics(0, -height.Points * i, graphics);
+                    pageGraphics.Crop(new Rectangle(0, 0, width.Points, height.Points));
+            
+                    pages.Add(page);
+                }
+                return;
+            default:
+                throw new UnreachableException();
         }
         
-        // Elsewise, we split the page up into multiple pieces
-        var pageCount = MathF.Ceiling(height.Points / actualPageHeight);
-        for (var i = 0; i < pageCount; i++)
+        void RenderSinglePage(float pageHeight)
         {
-            var page = new Page(width.Points, actualPageHeight)
+            var page = new Page(width.Points, pageHeight)
             {
-                Background = pageLayout.PageColor.ToVectSharpColor()
+                Background = pageLayout.PageColor.ToVectSharpColor(),
+                Graphics = backgroundGraphics
             };
-            var pageGraphics = page.Graphics;
-            
-            // Each page gets a copy of the background graphics, and a slice of the grid and foreground graphics
-            pageGraphics.DrawGraphics(0, 0, backgroundGraphics);
-            pageGraphics.DrawGraphics(0, -height.Points * i, graphics);
-            pageGraphics.Crop(new Rectangle(0, 0, width.Points, height.Points));
-            
+            page.Graphics.DrawGraphics(0, 0, graphics);
             pages.Add(page);
         }
     }

@@ -1,5 +1,6 @@
 using System.Xml;
 using AquaVitae.Layouts;
+using AquaVitae.Layouts.Abstractions;
 using DocumentFormat.OpenXml.Wordprocessing;
 
 namespace AquaVitae.Render.Docx;
@@ -18,17 +19,9 @@ public sealed class DocxPageRenderer(
     {
         var paragraphs = new List<ParagraphLayoutBase>();
         
-        foreach (var element in page.PageElements)
-        {
-            switch (element)
-            {
-                case TextBoxLayout textBox:
-                    // Direct passthrough to paragraphs. We don't insert boxes in the underlying layout text
-                    // because MS Word breaks floating elements, and they end up smushed together on the left margin.
-                    paragraphs.AddRange(textBox.Paragraphs);
-                    break;
-            }
-        }
+        page.Background?.CollectParagraphs(paragraphs.Add);
+        page.Grid?.CollectParagraphs(paragraphs.Add);
+        page.Foreground?.CollectParagraphs(paragraphs.Add);
 
         foreach (var paragraphLayout in paragraphs.OrderBy(p => p))
         {

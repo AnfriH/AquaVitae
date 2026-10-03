@@ -3,16 +3,11 @@ using AquaVitae.Layouts.Types;
 
 namespace AquaVitae.Layouts;
 
-public sealed class PageLayout(
-    PageSize pageSize, 
-    Color? pageColor = null, 
-    PageOverflowBehaviour overflowBehaviour = PageOverflowBehaviour.Truncate
-) : LayoutBase
+public sealed class PageLayout(PageSize pageSize) : LayoutBase
 {
     public PageSize PageSize => pageSize;
-    public PageOverflowBehaviour OverflowBehaviour => overflowBehaviour;
-    public Color PageColor { get; } = pageColor ?? Colors.White;
-
+    public PageOverflowBehaviour OverflowBehaviour { get; init; } = PageOverflowBehaviour.Truncate;
+    public Color PageColor { get; init; } = Colors.White;
     public CanvasLayout? Background { get; init; }
     public GridLayout? Grid { get; init; }
     public CanvasLayout? Foreground { get; init; }

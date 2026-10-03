@@ -121,7 +121,7 @@ public sealed class VectorGridRenderer
             
         // We crop the cell to its rendered dimensions
         cellGraphics.Crop(new Rectangle(0, 0, cellWidth, cellHeight));
-        _graphics.DrawGraphics(new Point(x, y), cellGraphics);
+        _graphics.DrawGraphics(x, y, cellGraphics);
         
         // We update the height of the row below us
         UpdateYHeight(cell.CornerRowIndex + 1, y + cellHeight);
