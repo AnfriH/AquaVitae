@@ -46,7 +46,7 @@ public sealed class VectorDocumentRenderer
         var pages = new List<Page>(pageLayouts.Count);
         foreach (var pageLayout in pageLayouts)
         {
-            pages.Add(pageRenderer.RenderPage(pageLayout));
+            pageRenderer.RenderPage(pageLayout, pages);
         }
         
         return pages;

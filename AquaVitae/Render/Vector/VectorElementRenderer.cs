@@ -7,14 +7,14 @@ namespace AquaVitae.Render.Vector;
 
 public sealed class VectorElementRenderer
 {
-    private readonly VectorTextBoxRenderer _textBoxRenderer;
-    private readonly VectorBoxRenderer _boxRenderer = new();
-    private readonly VectorCanvasRenderer _canvasRenderer;
+    public VectorTextBoxRenderer TextBoxRenderer { get; }
+    public VectorBoxRenderer BoxRenderer { get; } = new();
+    public VectorCanvasRenderer CanvasRenderer { get; }
 
     public VectorElementRenderer(VectorStyleRenderer styleRenderer)
     {
-        _textBoxRenderer = new VectorTextBoxRenderer(new VectorParagraphRenderer(styleRenderer), styleRenderer);
-        _canvasRenderer = new VectorCanvasRenderer(this);
+        TextBoxRenderer = new VectorTextBoxRenderer(new VectorParagraphRenderer(styleRenderer), styleRenderer);
+        CanvasRenderer = new VectorCanvasRenderer(this);
     }
 
     /// <summary>
@@ -43,9 +43,9 @@ public sealed class VectorElementRenderer
         return element switch
         {
             GridLayout gridLayout => new VectorGridRenderer(this, gridLayout, width, graphics).RenderGrid(),
-            TextBoxLayout textBoxLayout => _textBoxRenderer.RenderTextBox(textBoxLayout, graphics, width),
-            BoxLayout boxLayout => _boxRenderer.RenderBox(boxLayout, graphics, width, height),
-            CanvasLayout canvasLayout => _canvasRenderer.RenderCanvas(canvasLayout, graphics),
+            TextBoxLayout textBoxLayout => TextBoxRenderer.RenderTextBox(textBoxLayout, graphics, width),
+            BoxLayout boxLayout => BoxRenderer.RenderBox(boxLayout, graphics, width, height),
+            CanvasLayout canvasLayout => CanvasRenderer.RenderCanvas(canvasLayout, graphics),
         };
     }
 }

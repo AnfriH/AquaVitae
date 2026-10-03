@@ -13,19 +13,9 @@ public sealed class PageLayout(
     public PageOverflowBehaviour OverflowBehaviour => overflowBehaviour;
     public Color PageColor { get; } = pageColor ?? Colors.White;
 
-    private CanvasLayout? _background;
-    public CanvasLayout Background => _background ??= new CanvasLayout();
-    
-    private GridLayout? _grid;
-    public GridLayout Grid => _grid ??= new GridLayout();
-
-    private CanvasLayout? _foreground;
-    public CanvasLayout Foreground => _foreground ??= new CanvasLayout();
-    
-    // Internal helpers to avoid creating the backing fields if they are not used
-    internal CanvasLayout? GetBackground() => _background;
-    internal GridLayout? GetGrid() => _grid;
-    internal CanvasLayout? GetForeground() => _foreground;
+    public CanvasLayout? Background { get; init; }
+    public GridLayout? Grid { get; init; }
+    public CanvasLayout? Foreground { get; init; }
 }
 
 public enum PageOverflowBehaviour
@@ -50,5 +40,11 @@ public enum PageOverflowBehaviour
     /// <item>The <see cref="PageLayout.Grid">Grid</see> layer does not have a continuous horizontal break</item>
     /// </list>
     /// </summary>
-    PageFit
+    PageFit,
+    
+    /// <summary>
+    /// Overflowing content will result in the page being lengthened to fit the content.
+    /// This is currently not compatible with docx export.
+    /// </summary>
+    Scale
 }
