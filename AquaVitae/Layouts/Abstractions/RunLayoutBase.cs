@@ -1,6 +1,6 @@
 using AquaVitae.Layouts.Styles;
 
-namespace AquaVitae.Layouts;
+namespace AquaVitae.Layouts.Abstractions;
 
 public closed class RunLayoutBase(string text, StyleId<RunStyle> style) : LayoutBase
 {

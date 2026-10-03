@@ -1,12 +1,13 @@
 using AquaVitae.Common;
+using AquaVitae.Layouts.Abstractions;
 using AquaVitae.Layouts.Types;
 
 namespace AquaVitae.Layouts;
 
-public sealed class TextBoxLayout(PrintPoint x, PrintPoint y, PrintPoint width, PrintPoint height) : ElementLayoutBase
+public sealed class TextBoxLayout(PrintPoint x, PrintPoint y, PrintPoint width, PrintPoint height) : LayoutBase
 {
-    public override PrintPoint X => x;
-    public override PrintPoint Y => y;
+    public PrintPoint X => x;
+    public PrintPoint Y => y;
     public PrintPoint Width => width;
     public PrintPoint Height => height;
     

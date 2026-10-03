@@ -1,6 +1,6 @@
 using AquaVitae.Layouts.Styles;
 
-namespace AquaVitae.Layouts;
+namespace AquaVitae.Layouts.Abstractions;
 
 public closed class ParagraphLayoutBase(StyleId<ParagraphStyle> style) : LayoutBase, IComparable<ParagraphLayoutBase>
 {

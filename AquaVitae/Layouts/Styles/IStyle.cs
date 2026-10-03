@@ -1,3 +1,5 @@
+using AquaVitae.Layouts.Abstractions;
+
 namespace AquaVitae.Layouts.Styles;
 
 public interface IStyle
