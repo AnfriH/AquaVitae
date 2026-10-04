@@ -1,5 +1,4 @@
 using System.Xml;
-using AquaVitae.Layouts;
 using AquaVitae.Render.Vector;
 using DocumentFormat.OpenXml.Drawing;
 using DocumentFormat.OpenXml.Drawing.Wordprocessing;
@@ -24,7 +23,7 @@ public sealed class DocxSvgRenderer(MainDocumentPart mainPart)
     
     public Drawing RenderSvg(SvgPage svgPage)
     {
-        var relId = AddSvgToDocument(svgPage.Svg);
+        var relId = AddSvgToDocument(svgPage.Document);
         
         var svgBlip = new SVGBlip { Embed = relId };
 
@@ -52,7 +51,7 @@ public sealed class DocxSvgRenderer(MainDocumentPart mainPart)
                 {
                     RelativeFrom = VerticalRelativePositionValues.Page
                 },
-                new Extent { Cx = width.ToEmusInt(), Cy = height.ToEmusInt() },
+                new Extent { Cx = width.ToEmusLong(), Cy = height.ToEmusLong() },
                 new EffectExtent { LeftEdge = 0, TopEdge = 0, RightEdge = 0, BottomEdge = 0 },
                 new WrapNone(),
                 new DocProperties { Id = _id++, Name = "Svg Image"},
@@ -78,7 +77,7 @@ public sealed class DocxSvgRenderer(MainDocumentPart mainPart)
                                 Transform2D = new Transform2D
                                 {
                                     Offset = new Offset { X = 0, Y = 0 },
-                                    Extents = new Extents{ Cx = width.ToEmusInt(), Cy = height.ToEmusInt() }
+                                    Extents = new Extents{ Cx = width.ToEmusLong(), Cy = height.ToEmusLong() }
                                 }
                             }
                         )    
@@ -101,6 +100,11 @@ public sealed class DocxSvgRenderer(MainDocumentPart mainPart)
                 AllowOverlap = true
             }
         };
+
+        if (svgPage.Hyperlinks != null)
+        {
+            // TODO
+        }
 
         return drawing;
     }

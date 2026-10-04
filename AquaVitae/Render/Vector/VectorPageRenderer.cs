@@ -5,14 +5,13 @@ using VectSharp;
 namespace AquaVitae.Render.Vector;
 
 public class VectorPageRenderer(
-    VectorStyleRenderer styleRenderer,
-    VectorHyperlinkRenderer hyperlinkRenderer
+    VectorStyleRenderer styleRenderer
 )
 {
-    private readonly VectorElementRenderer _elementRenderer = new(styleRenderer, hyperlinkRenderer);
-    
-    public void RenderPage(PageLayout pageLayout, List<Page> pages)
+    public void RenderPage(PageLayout pageLayout, Action<Page, VectorHyperlinkRenderer> addPageCallback)
     {
+        var hyperlinkRenderer = new VectorHyperlinkRenderer();
+        var elementRenderer = new VectorElementRenderer(styleRenderer, hyperlinkRenderer);
         var (width, height) = pageLayout.PageSize;
         
         var backgroundGraphics = new Graphics();
@@ -26,7 +25,7 @@ public class VectorPageRenderer(
         {
             actualPageHeight = MathF.Max(
                 actualPageHeight,
-                _elementRenderer.CanvasRenderer.RenderCanvas(background, backgroundGraphics).Points
+                elementRenderer.CanvasRenderer.RenderCanvas(background, backgroundGraphics, 0, 0).Points
             );
         }
         
@@ -36,7 +35,7 @@ public class VectorPageRenderer(
             actualPageHeight = MathF.Max(
                 actualPageHeight,
                 new VectorGridRenderer(
-                    _elementRenderer, 
+                    elementRenderer, 
                     grid, 
                     width, 
                     height, 
@@ -51,7 +50,7 @@ public class VectorPageRenderer(
         {
             actualPageHeight = MathF.Max(
                 actualPageHeight,
-                _elementRenderer.CanvasRenderer.RenderCanvas(foreground, graphics).Points
+                elementRenderer.CanvasRenderer.RenderCanvas(foreground, graphics, 0, 0).Points
             );
         }
         
@@ -84,7 +83,7 @@ public class VectorPageRenderer(
                     pageGraphics.DrawGraphics(0, -height.Points * i, graphics);
                     pageGraphics.Crop(new Rectangle(0, 0, width.Points, height.Points));
             
-                    pages.Add(page);
+                    addPageCallback(page, hyperlinkRenderer);
                 }
                 return;
             default:
@@ -99,7 +98,7 @@ public class VectorPageRenderer(
                 Graphics = backgroundGraphics
             };
             page.Graphics.DrawGraphics(0, 0, graphics);
-            pages.Add(page);
+            addPageCallback(page, hyperlinkRenderer);
         }
     }
 }

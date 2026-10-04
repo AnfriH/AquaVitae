@@ -14,6 +14,9 @@ public sealed class VectorGridRenderer
     private readonly GridLayout _gridLayout;
     private readonly Graphics _graphics;
     private readonly PageOverflowBehaviour _overflowBehaviour;
+
+    private readonly PrintPoint X;
+    private readonly PrintPoint Y;
     
     public VectorGridRenderer(
         VectorElementRenderer elementRenderer,
@@ -30,12 +33,16 @@ public sealed class VectorGridRenderer
         _overflowBehaviour = overflowBehaviour;
         _widthPoints = width.Points;
         _heightPoints = height.Points;
+        X = PrintPoint.Zero;
+        Y = PrintPoint.Zero;
     }
 
     public VectorGridRenderer(
         VectorElementRenderer elementRenderer,
         GridLayout gridLayout,
         PrintPoint width,
+        PrintPoint x,
+        PrintPoint y,
         Graphics graphics
     )
     {
@@ -47,6 +54,8 @@ public sealed class VectorGridRenderer
         
         // I set this to NaN as it should not be used if instantiated with this constructor
         _heightPoints = float.NaN;
+        X = x;
+        Y = y;
     }
 
     public PrintPoint RenderGrid()
@@ -92,6 +101,8 @@ public sealed class VectorGridRenderer
         var cellHeight = _elementRenderer.RenderElement(
             cell.Element,
             cellGraphics,
+            X + x,
+            Y + y,
             cellWidth,
             cell.MaxHeight
         ).Points;

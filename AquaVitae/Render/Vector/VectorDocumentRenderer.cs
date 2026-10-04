@@ -1,4 +1,4 @@
-using System.Xml;
+using System.Xml.Linq;
 using AquaVitae.Layouts;
 using VectSharp;
 using VectSharp.PDF;
@@ -8,48 +8,62 @@ namespace AquaVitae.Render.Vector;
 
 public sealed class VectorDocumentRenderer
 {
-    private readonly VectorHyperlinkRenderer _hyperlinkRenderer = new();
-
+    private static readonly Dictionary<string, string> Empty = new();
+    
     public SvgDocument RenderAsSvg(DocumentLayout documentLayout)
     {
-        var pages = RenderPages(documentLayout);
-        
-        var pageSvgs = new SvgPage[pages.Count];
-        for (var i = 0; i < pageSvgs.Length; i++)
+        var pageSvgs = new List<SvgPage>();
+        RenderPages(documentLayout, AddPage);
+        return new SvgDocument(pageSvgs);
+
+        void AddPage(Page page, VectorHyperlinkRenderer hyperlinkRenderer)
         {
-            var page = pages[i];
             var svg = page.SaveAsSVG(
                 SVGContextInterpreter.TextOptions.ConvertIntoPathsUsingGlyphs,
-                _hyperlinkRenderer.Hyperlinks
+                hyperlinkRenderer.Hyperlinks
             );
             
-            pageSvgs[i] = new SvgPage((float)page.Width, (float)page.Height, svg);
+            pageSvgs.Add(new SvgPage(
+                (float)page.Width, 
+                (float)page.Height, 
+                svg,
+                hyperlinkRenderer.LinkPositions
+            ));
         }
-        
-        return new SvgDocument(pageSvgs);
     }
 
     public PDFDocument RenderAsPdf(DocumentLayout documentLayout)
     {
-        var pages = RenderPages(documentLayout);
+        var hyperlinks = new Dictionary<string, string>();
+        var pages = new List<Page>();
+        
+        RenderPages(documentLayout, AddPage);
         var document = new Document { Pages = pages };
         
-        return document.CreatePDFDocument(linkDestinations: _hyperlinkRenderer.Hyperlinks);
+        return document.CreatePDFDocument(linkDestinations: hyperlinks);
+
+        void AddPage(Page page, VectorHyperlinkRenderer hyperlinkRenderer)
+        {
+            pages.Add(page);
+            if (hyperlinkRenderer.Hyperlinks == null) return;
+
+            foreach (var (key, value) in hyperlinkRenderer.Hyperlinks)
+            {
+                hyperlinks.Add(key, value);
+            }
+        }
     }
     
-    private List<Page> RenderPages(DocumentLayout documentLayout)
+    private void RenderPages(DocumentLayout documentLayout, Action<Page, VectorHyperlinkRenderer> addPageCallback)
     {
         var styles = new VectorStyleRenderer(documentLayout.Styles);
         
-        var pageRenderer = new VectorPageRenderer(styles, _hyperlinkRenderer);
+        var pageRenderer = new VectorPageRenderer(styles);
         var pageLayouts = documentLayout.Pages;
         
-        var pages = new List<Page>();
         foreach (var pageLayout in pageLayouts)
         {
-            pageRenderer.RenderPage(pageLayout, pages);
+            pageRenderer.RenderPage(pageLayout, addPageCallback);
         }
-        
-        return pages;
     }
 }

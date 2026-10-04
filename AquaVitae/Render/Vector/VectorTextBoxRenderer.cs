@@ -10,10 +10,10 @@ public class VectorTextBoxRenderer(
     VectorHyperlinkRenderer hyperlinkRenderer
 )
 {
-    public PrintPoint RenderTextBox(TextBoxLayout textBoxLayout, Graphics graphics, PrintPoint width)
+    public PrintPoint RenderTextBox(TextBoxLayout textBoxLayout, Graphics graphics, PrintPoint width, PrintPoint x, PrintPoint y)
     {
         var textGraphics = textBoxLayout.Paragraphs.Count > 0 
-            ? RenderParagraphs(textBoxLayout, width) 
+            ? RenderParagraphs(textBoxLayout, width, x, y) 
             : null;
 
         var actualHeight = textGraphics != null 
@@ -41,11 +41,11 @@ public class VectorTextBoxRenderer(
         return actualHeight;
     }
 
-    private Page RenderParagraphs(TextBoxLayout textBoxLayout, PrintPoint width)
+    private Page RenderParagraphs(TextBoxLayout textBoxLayout, PrintPoint width, PrintPoint x, PrintPoint y)
     {
         var margins = textBoxLayout.InnerMargins;
         
-        var paragraphRenderer = new VectorParagraphRenderer(styleRenderer)
+        var paragraphRenderer = new VectorParagraphRenderer(styleRenderer, x, y)
         {
             Margins = new Margins(
                 margins.Left.Points,
@@ -66,6 +66,7 @@ public class VectorTextBoxRenderer(
             out _
         );
         
+        hyperlinkRenderer.AddLinkBounds(paragraphRenderer.Links);
         hyperlinkRenderer.AddHyperlinks(hyperlinks);
         return innerPage;
     }

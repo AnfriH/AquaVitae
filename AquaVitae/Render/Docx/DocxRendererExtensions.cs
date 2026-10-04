@@ -19,6 +19,6 @@ public static class DocxRendererExtensions
         public int ToTwipsInt() => checked((int)MathF.Round(pt.Twips));
         public StringValue ToTwipsString() => new(pt.ToTwipsInt().ToString());
         public StringValue ToHalfPointsString() => new(pt.ToHalfPointsUint().ToString());
-        public long ToEmusInt() => checked((long)MathF.Round(pt.Emus));
+        public long ToEmusLong() => checked((long)MathF.Round(pt.Emus));
     }
 }

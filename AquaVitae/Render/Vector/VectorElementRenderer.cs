@@ -39,16 +39,18 @@ public sealed class VectorElementRenderer
     public PrintPoint RenderElement(
         ElementLayoutBase element,
         Graphics graphics,
+        PrintPoint x,
+        PrintPoint y,
         PrintPoint width,
         PrintPoint? height
     )
     {
         return element switch
         {
-            GridLayout gridLayout => new VectorGridRenderer(this, gridLayout, width, graphics).RenderGrid(),
-            TextBoxLayout textBoxLayout => TextBoxRenderer.RenderTextBox(textBoxLayout, graphics, width),
+            GridLayout gridLayout => new VectorGridRenderer(this, gridLayout, width, x, y, graphics).RenderGrid(),
+            TextBoxLayout textBoxLayout => TextBoxRenderer.RenderTextBox(textBoxLayout, graphics, width, x, y),
             BoxLayout boxLayout => BoxRenderer.RenderBox(boxLayout, graphics, width, height),
-            CanvasLayout canvasLayout => CanvasRenderer.RenderCanvas(canvasLayout, graphics),
+            CanvasLayout canvasLayout => CanvasRenderer.RenderCanvas(canvasLayout, graphics, x, y),
         };
     }
 }

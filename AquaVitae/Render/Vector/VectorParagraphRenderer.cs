@@ -1,6 +1,7 @@
 using AquaVitae.Layouts;
 using AquaVitae.Layouts.Abstractions;
 using AquaVitae.Layouts.Styles;
+using AquaVitae.Layouts.Types;
 using Markdig.Syntax;
 using Markdig.Syntax.Inlines;
 using VectSharp;
@@ -8,12 +9,16 @@ using VectSharp.Markdown;
 
 namespace AquaVitae.Render.Vector;
 
-public class VectorParagraphRenderer(VectorStyleRenderer styleRenderer) : MarkdownRenderer
+public sealed record LinkPosition(PrintPoint X, PrintPoint Y, PrintPoint Width, PrintPoint Height, Uri Uri);
+
+public class VectorParagraphRenderer(VectorStyleRenderer styleRenderer, PrintPoint x, PrintPoint y) : MarkdownRenderer
 {
     private readonly Dictionary<Inline, StyleId<RunStyle>> _runStyles = new(ReferenceEqualityComparer.Instance);
     private readonly Dictionary<Block, StyleId<ParagraphStyle>> _paragraphStyles = new(ReferenceEqualityComparer.Instance);
     private readonly Dictionary<Block, StyleId<VerticalListStyle>> _verticalListStyles = new(ReferenceEqualityComparer.Instance);
-
+    private readonly List<LinkPosition> _links = [];
+    public IReadOnlyList<LinkPosition> Links => _links;
+    
     public virtual void StyleRun(Inline inline, RunLayoutBase layout)
     {
         _runStyles.Add(inline, layout.Style);
@@ -37,8 +42,20 @@ public class VectorParagraphRenderer(VectorStyleRenderer styleRenderer) : Markdo
     {
         base.OnInlineRendering(ref context, ref graphics, ref inline);
         if (_runStyles.TryGetValue(inline, out var styleId)) ApplyRunStyle(styleId, ref context);
+        if (inline is LinkInline linkInline)
+        {
+            var size = context.Font.MeasureText(linkInline.Title!);
+            
+            _links.Add(new LinkPosition(
+                (float)context.Cursor.X + x,
+                (float)context.Cursor.Y + y,
+                (float)size.Width,
+                (float)size.Height,
+                new Uri(linkInline.Url!)
+            ));
+        }
     }
-
+    
     protected override void OnBlockRendering(ref MarkdownContext context, ref Graphics graphics, ref Block block)
     {
         base.OnBlockRendering(ref context, ref graphics, ref block);

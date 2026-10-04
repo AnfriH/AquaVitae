@@ -6,7 +6,7 @@ namespace AquaVitae.Render.Vector;
 
 public sealed class VectorCanvasRenderer(VectorElementRenderer elementRenderer)
 {
-    public PrintPoint RenderCanvas(CanvasLayout canvasLayout, Graphics graphics)
+    public PrintPoint RenderCanvas(CanvasLayout canvasLayout, Graphics graphics, PrintPoint x, PrintPoint y)
     {
         var canvas = new Graphics();
 
@@ -16,7 +16,14 @@ public sealed class VectorCanvasRenderer(VectorElementRenderer elementRenderer)
         {
             canvas.Save();
             canvas.Translate(new Point(positionedElement.X.Points, positionedElement.Y.Points));
-            elementRenderer.RenderElement(positionedElement.Element, canvas, positionedElement.Width, positionedElement.Height);
+            elementRenderer.RenderElement(
+                positionedElement.Element,
+                canvas,
+                x + positionedElement.X,
+                y + positionedElement.Y,
+                positionedElement.Width,
+                positionedElement.Height
+            );
             canvas.Restore();
             totalWidth = MathF.Max(totalWidth, positionedElement.X.Points + positionedElement.Width.Points);
             totalHeight = MathF.Max(totalHeight, positionedElement.Y.Points + positionedElement.Height.Points);

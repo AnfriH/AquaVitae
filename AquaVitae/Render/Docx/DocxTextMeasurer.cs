@@ -27,7 +27,7 @@ public sealed class DocxTextMeasurer : VectorParagraphRenderer
         VectorStyleRenderer styleRenderer,
         IReadOnlyList<SvgPage> svgPages,
         Margins margins
-    ) : base(styleRenderer)
+    ) : base(styleRenderer, 0, 0)
     {
         _svgPages = svgPages;
         _margins = margins;
