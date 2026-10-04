@@ -47,8 +47,8 @@ public class VectorParagraphRenderer(VectorStyleRenderer styleRenderer, PrintPoi
             var size = context.Font.MeasureText(linkInline.Title!);
             
             _links.Add(new LinkPosition(
-                (float)context.Cursor.X + x,
-                (float)context.Cursor.Y + y,
+                (float)(context.Cursor.X + x.Points),
+                (float)(context.Cursor.Y + y.Points + context.Font.Descent),
                 (float)size.Width,
                 (float)size.Height,
                 new Uri(linkInline.Url!)

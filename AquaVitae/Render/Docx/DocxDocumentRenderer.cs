@@ -29,7 +29,7 @@ public sealed class DocxDocumentRenderer(DocxRendererSettings settings)
         var numberingRenderer = new DocxNumberingRenderer(document, mainPart);
         var hyperlinkRenderer = new DocxHyperlinkRenderer(mainPart);
         var stylesRenderer = new DocxStylesRenderer(document, mainPart, settings);
-        var svgRenderer = new DocxSvgRenderer(mainPart);
+        var svgRenderer = new DocxSvgRenderer(mainPart, hyperlinkRenderer);
         
         var pageRenderer = new DocxPageRenderer(
             numberingRenderer, 

@@ -2,6 +2,7 @@ using System.Xml;
 using AquaVitae.Render.Vector;
 using DocumentFormat.OpenXml.Drawing;
 using DocumentFormat.OpenXml.Drawing.Wordprocessing;
+using DocumentFormat.OpenXml.Office2010.Word.DrawingShape;
 using DocumentFormat.OpenXml.Office2019.Drawing.SVG;
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Wordprocessing;
@@ -15,16 +16,40 @@ using ShapeProperties = DocumentFormat.OpenXml.Drawing.Pictures.ShapeProperties;
 
 namespace AquaVitae.Render.Docx;
 
-public sealed class DocxSvgRenderer(MainDocumentPart mainPart)
+public sealed class DocxSvgRenderer(MainDocumentPart mainPart, DocxHyperlinkRenderer hyperlinkRenderer)
 {
     private const string SvgExtension = "{96DAC541-7B7A-43D3-8B79-37D633B846F1}";
     private const string DrawingMlUri = "http://schemas.openxmlformats.org/drawingml/2006/picture";
+    private const string WordprocessingShapeUri = "http://schemas.microsoft.com/office/word/2010/wordprocessingShape";
     private uint _id;
-    
-    public Drawing RenderSvg(SvgPage svgPage)
+
+    public IEnumerable<Drawing> RenderSvg(SvgPage svgPage)
+    {
+        yield return CreateSvgPanel(svgPage);
+
+        if (svgPage.Hyperlinks.Count <= 0) yield break;
+        
+        foreach (var linkPosition in svgPage.Hyperlinks)
+        {
+            yield return CreateHyperlinkClickBox(linkPosition);
+        }
+    }
+
+    private string AddSvgToDocument(XmlDocument svg)
+    {
+        var imagePart = mainPart.AddImagePart(ImagePartType.Svg);
+        var stream = new MemoryStream();
+        svg.Save(stream);
+        stream.Seek(0, SeekOrigin.Begin);
+        imagePart.FeedData(stream);
+
+        return mainPart.GetIdOfPart(imagePart);
+    }
+
+    private Drawing CreateSvgPanel(SvgPage svgPage)
     {
         var relId = AddSvgToDocument(svgPage.Document);
-        
+
         var svgBlip = new SVGBlip { Embed = relId };
 
         var svgExtension = new BlipExtension { Uri = SvgExtension };
@@ -35,11 +60,11 @@ public sealed class DocxSvgRenderer(MainDocumentPart mainPart)
 
         var blip = new Blip();
         blip.AppendChild(blipExtensionList);
-
-        var width = svgPage.Width;
-        var height = svgPage.Height;
         
-        var drawing = new Drawing
+        var width = svgPage.Width.ToEmusLong();
+        var height = svgPage.Height.ToEmusLong();
+        
+        return new Drawing
         {
             Anchor = new Anchor(
                 new SimplePosition { X = 0, Y = 0 },
@@ -51,10 +76,10 @@ public sealed class DocxSvgRenderer(MainDocumentPart mainPart)
                 {
                     RelativeFrom = VerticalRelativePositionValues.Page
                 },
-                new Extent { Cx = width.ToEmusLong(), Cy = height.ToEmusLong() },
+                new Extent { Cx = width, Cy = height },
                 new EffectExtent { LeftEdge = 0, TopEdge = 0, RightEdge = 0, BottomEdge = 0 },
                 new WrapNone(),
-                new DocProperties { Id = _id++, Name = "Svg Image"},
+                new DocProperties { Id = _id++, Name = "Svg Image" },
                 new NonVisualGraphicFrameProperties(new GraphicFrameLocks { NoChangeAspect = true }),
                 new Graphic(
                     new GraphicData(
@@ -71,16 +96,16 @@ public sealed class DocxSvgRenderer(MainDocumentPart mainPart)
                                 new PresetGeometry
                                 {
                                     Preset = ShapeTypeValues.Rectangle
-                                }    
+                                }
                             )
                             {
                                 Transform2D = new Transform2D
                                 {
                                     Offset = new Offset { X = 0, Y = 0 },
-                                    Extents = new Extents{ Cx = width.ToEmusLong(), Cy = height.ToEmusLong() }
+                                    Extents = new Extents { Cx = width, Cy = height }
                                 }
                             }
-                        )    
+                        )
                     )
                     {
                         Uri = DrawingMlUri
@@ -93,30 +118,109 @@ public sealed class DocxSvgRenderer(MainDocumentPart mainPart)
                 DistanceFromLeft = 0,
                 DistanceFromRight = 0,
                 SimplePos = false,
-                RelativeHeight = uint.MaxValue,
+                RelativeHeight = 100, // just below hyperlinks
                 BehindDoc = false,
                 Locked = false,
                 LayoutInCell = true,
                 AllowOverlap = true
             }
         };
-
-        if (svgPage.Hyperlinks != null)
-        {
-            // TODO
-        }
-
-        return drawing;
     }
 
-    private string AddSvgToDocument(XmlDocument svg)
+    private Drawing CreateHyperlinkClickBox(LinkPosition linkPosition)
     {
-        var imagePart = mainPart.AddImagePart(ImagePartType.Svg);
-        var stream = new MemoryStream();
-        svg.Save(stream);
-        stream.Seek(0, SeekOrigin.Begin);
-        imagePart.FeedData(stream);
+        var hyperlinkRelId = hyperlinkRenderer.AddHyperlink(linkPosition.Uri);
 
-        return mainPart.GetIdOfPart(imagePart);
+        return new Drawing
+        {
+            Anchor = new Anchor(
+                new SimplePosition { X = 0, Y = 0 },
+                new HorizontalPosition(new PositionOffset(linkPosition.X.ToEmusLong().ToString()))
+                {
+                    RelativeFrom = HorizontalRelativePositionValues.Page
+                },
+                new VerticalPosition(new PositionOffset(linkPosition.Y.ToEmusLong().ToString()))
+                {
+                    RelativeFrom = VerticalRelativePositionValues.Page
+                },
+                new Extent
+                {
+                    Cx = linkPosition.Width.ToEmusLong(),
+                    Cy = linkPosition.Height.ToEmusLong()
+                },
+                new EffectExtent { LeftEdge = 0, TopEdge = 0, RightEdge = 0, BottomEdge = 0 },
+                new WrapNone(),
+                new DocProperties(
+                    new HyperlinkOnClick
+                    {
+                        Id = hyperlinkRelId
+                    })
+                {
+                    Id = _id++,
+                    Name = "Hyperlink Click Box"
+                },
+                new NonVisualGraphicFrameProperties(new GraphicFrameLocks { NoChangeAspect = true }),
+                new Graphic(
+                    new GraphicData(
+                        new WordprocessingShape(
+                            new NonVisualDrawingShapeProperties(
+                                new DocumentFormat.OpenXml.Office2010.Word.DrawingShape.NonVisualDrawingProperties
+                                {
+                                    Id = _id++,
+                                    Name = "Clickable Link Box"
+                                },
+                                new NonVisualShapeDrawingProperties()
+                            ),
+                            new DocumentFormat.OpenXml.Office2010.Word.DrawingShape.ShapeProperties(
+                                new Transform2D(
+                                    new Offset
+                                    {
+                                        X = 0,
+                                        Y = 0
+                                    },
+                                    new Extents
+                                    {
+                                        Cx = linkPosition.Width.ToEmusLong(),
+                                        Cy = linkPosition.Height.ToEmusLong()
+                                    }
+                                ),
+                                new PresetGeometry
+                                {
+                                    Preset = ShapeTypeValues.Rectangle,
+                                    AdjustValueList = new AdjustValueList()
+                                },
+                                new SolidFill(
+                                    new RgbColorModelHex(new Alpha
+                                    {
+                                        // Cursed jank value. Basically, LibreOffice will only allow a box to
+                                        // be clickable if the transparency is above 0%. As OpenXML alpha is
+                                        // from 0 to 100_000, 501 is the smallest value that triggers as 1%.
+                                        Val = 501
+                                    })
+                                    {
+                                        Val = "FFFFFF"
+                                    }
+                                )
+                            )
+                        )
+                    )
+                    {
+                        Uri = WordprocessingShapeUri
+                    }
+                )
+            )
+            {
+                DistanceFromTop = 0,
+                DistanceFromBottom = 0,
+                DistanceFromLeft = 0,
+                DistanceFromRight = 0,
+                SimplePos = false,
+                RelativeHeight = 200,
+                BehindDoc = false,
+                Locked = false,
+                LayoutInCell = true,
+                AllowOverlap = true
+            }
+        };
     }
 }

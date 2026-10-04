@@ -33,10 +33,10 @@ public sealed class DocxPageRenderer(
                     break;
             }
         }
-
-        var drawing = svgRenderer.RenderSvg(svgPage);
+        
+        var drawings = svgRenderer.RenderSvg(svgPage);
         var svgParagraph = body.AppendChild(new Paragraph());
-        svgParagraph.AppendChild(new Run(drawing));
+        svgParagraph.Append(drawings.Select(d => new Run(d)));
         
         RenderPageFormatting(svgPage.Width, svgPage.Height, body, finalPage);
     }
