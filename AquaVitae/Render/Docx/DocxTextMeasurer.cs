@@ -14,34 +14,21 @@ namespace AquaVitae.Render.Docx;
 /// Technically, this type deals with rendering of a vector document.
 /// However, it only does this to facilitate measuring text.
 /// </remarks>
-public sealed class DocxTextMeasurer : VectorParagraphRenderer
+public sealed class DocxTextMeasurer(VectorStyleRenderer styleRenderer, IReadOnlyList<SvgPage> svgPages)
+    : VectorParagraphRenderer(styleRenderer, 0, 0)
 {
-    private readonly IReadOnlyList<SvgPage> _svgPages;
-    private readonly Margins _margins;
-    
+    private const float ScaleFactor = 1.75f;
     private readonly Dictionary<Block, ParagraphLayoutBase> _owningBlocks = new(ReferenceEqualityComparer.Instance);
-    private readonly List<List<ParagraphLayoutBase>> _paragraphLayoutsByPage;
+    private readonly List<List<ParagraphLayoutBase>> _paragraphLayoutsByPage = [];
     private int _pageIndex;
-    
-    public DocxTextMeasurer(
-        VectorStyleRenderer styleRenderer,
-        IReadOnlyList<SvgPage> svgPages,
-        Margins margins
-    ) : base(styleRenderer, 0, 0)
-    {
-        _svgPages = svgPages;
-        _margins = margins;
-        _paragraphLayoutsByPage = [];
-    }
 
     public static List<List<ParagraphLayoutBase>> GetParagraphLayoutsByPage(
         IEnumerable<ParagraphLayoutBase> paragraphs,
         VectorStyleRenderer styleRenderer,
-        IReadOnlyList<SvgPage> svgPages,
-        Margins margins
+        IReadOnlyList<SvgPage> svgPages
     )
     {
-        var measurer = new DocxTextMeasurer(styleRenderer, svgPages, margins);
+        var measurer = new DocxTextMeasurer(styleRenderer, svgPages);
         var markdownRenderer = new VectorMarkdownRenderer(measurer, styleRenderer);
 
         var markdownDocument = markdownRenderer.RenderToDocument(paragraphs);
@@ -59,12 +46,12 @@ public sealed class DocxTextMeasurer : VectorParagraphRenderer
     protected override void OnPageStarted(ref MarkdownContext context, ref Graphics pageGraphics, Page page)
     {
         base.OnPageStarted(ref context, ref pageGraphics, page);
-        if (_pageIndex >= _svgPages.Count) throw new OutOfPagesException();
+        if (_pageIndex >= svgPages.Count) throw new OutOfPagesException();
         
-        var svgPage = _svgPages[_pageIndex];
+        var svgPage = svgPages[_pageIndex];
         
-        var width = svgPage.Width - _margins.Left - _margins.Right;
-        var height = svgPage.Height - _margins.Top - _margins.Bottom;
+        var width = svgPage.Width * ScaleFactor;
+        var height = svgPage.Height * ScaleFactor;
         
         if (width <= 0 || height <= 0) throw new InvalidOperationException(
             "Margins are too large for the provided page dimensions."

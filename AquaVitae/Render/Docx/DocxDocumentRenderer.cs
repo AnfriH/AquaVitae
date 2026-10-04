@@ -1,6 +1,5 @@
 using AquaVitae.Layouts;
 using AquaVitae.Layouts.Abstractions;
-using AquaVitae.Layouts.Types;
 using AquaVitae.Render.Vector;
 using DocumentFormat.OpenXml;
 using DocumentFormat.OpenXml.Packaging;
@@ -10,8 +9,6 @@ namespace AquaVitae.Render.Docx;
 
 public sealed class DocxDocumentRenderer(DocxRendererSettings settings)
 {
-    private static readonly Margins DefaultMargins = new(72, 72, 72, 72);
-    
     public void RenderDocument(DocumentLayout document, SvgDocument svgDocument, Stream outputStream)
     {
         using var wordDocument = WordprocessingDocument.Create(outputStream, WordprocessingDocumentType.Document);
@@ -41,13 +38,13 @@ public sealed class DocxDocumentRenderer(DocxRendererSettings settings)
         
         var paragraphs = new List<ParagraphLayoutBase>();
         document.CollectParagraphs(paragraphs.Add);
+        var orderedParagraphs = paragraphs.Order().ToList();
 
         var vectorStyleRenderer = new VectorStyleRenderer(document.Styles);
         var paragraphsByPage = DocxTextMeasurer.GetParagraphLayoutsByPage(
-            paragraphs,
+            orderedParagraphs,
             vectorStyleRenderer,
-            svgPages,
-            DefaultMargins
+            svgPages
         );
 
         for (var i = 0; i < svgPages.Count; i++)

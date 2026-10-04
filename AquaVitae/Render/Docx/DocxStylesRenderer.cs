@@ -14,6 +14,8 @@ public sealed class DocxStylesRenderer(
     DocxRendererSettings settings
 )
 {
+    private const float ScaleFactor = 0.5f;
+    
     private readonly Dictionary<string, Style> _runStyles = new();
     private readonly Dictionary<string, Style> _paragraphStyles = new();
     
@@ -125,7 +127,9 @@ public sealed class DocxStylesRenderer(
             HighAnsi = font.Name
         };
         
-        properties.FontSize = new FontSize { Val = style.FontSize.ToHalfPointsString() };
+        // We apply a scaling factor to give a safety barrier between
+        // the page's "idealised" size and the page's actual size.
+        properties.FontSize = new FontSize { Val = (style.FontSize * ScaleFactor).ToHalfPointsString() };
 
         if (settings.IncludeTextColor)
         {
