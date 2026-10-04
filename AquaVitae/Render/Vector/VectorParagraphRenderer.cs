@@ -42,13 +42,18 @@ public class VectorParagraphRenderer(VectorStyleRenderer styleRenderer, PrintPoi
     {
         base.OnInlineRendering(ref context, ref graphics, ref inline);
         if (_runStyles.TryGetValue(inline, out var styleId)) ApplyRunStyle(styleId, ref context);
+    }
+
+    protected override void OnInlineRendered(ref MarkdownContext context, ref Graphics graphics, Inline inline)
+    {
+        base.OnInlineRendered(ref context, ref graphics, inline);
         if (inline is LinkInline linkInline)
         {
-            var size = context.Font.MeasureText(linkInline.Title!);
+            var size = context.Font.MeasureText(linkInline.Title);
             
             _links.Add(new LinkPosition(
-                (float)(context.Cursor.X + x.Points),
-                (float)(context.Cursor.Y + y.Points + context.Font.Descent),
+                (float)(context.Cursor.X + x.Points - size.Width),
+                (float)(context.Cursor.Y + context.CurrentLine.InitialAscent - context.Font.Ascent - size.Height + y.Points),
                 (float)size.Width,
                 (float)size.Height,
                 new Uri(linkInline.Url!)
