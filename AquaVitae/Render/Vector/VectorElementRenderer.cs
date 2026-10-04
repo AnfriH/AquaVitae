@@ -11,9 +11,13 @@ public sealed class VectorElementRenderer
     public VectorBoxRenderer BoxRenderer { get; } = new();
     public VectorCanvasRenderer CanvasRenderer { get; }
 
-    public VectorElementRenderer(VectorStyleRenderer styleRenderer)
+    public VectorElementRenderer(VectorStyleRenderer styleRenderer, VectorHyperlinkRenderer hyperlinkRenderer)
     {
-        TextBoxRenderer = new VectorTextBoxRenderer(new VectorParagraphRenderer(styleRenderer), styleRenderer);
+        TextBoxRenderer = new VectorTextBoxRenderer(
+            new VectorParagraphRenderer(styleRenderer),
+            styleRenderer,
+            hyperlinkRenderer
+        );
         CanvasRenderer = new VectorCanvasRenderer(this);
     }
 

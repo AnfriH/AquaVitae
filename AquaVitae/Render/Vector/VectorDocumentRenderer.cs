@@ -8,24 +8,25 @@ namespace AquaVitae.Render.Vector;
 
 public sealed class VectorDocumentRenderer
 {
-    private int _uriIndex;
-    private readonly Dictionary<Uri, string> _uriRegistry = new();
-    private readonly Dictionary<string, string> _linkDestinations = new();
+    private readonly VectorHyperlinkRenderer _hyperlinkRenderer = new();
 
-    public XmlDocument[] RenderAsSvgPages(DocumentLayout documentLayout)
+    public SvgDocument RenderAsSvg(DocumentLayout documentLayout)
     {
         var pages = RenderPages(documentLayout);
         
-        var pageSvgs = new XmlDocument[pages.Count];
+        var pageSvgs = new SvgPage[pages.Count];
         for (var i = 0; i < pageSvgs.Length; i++)
         {
-            pageSvgs[i] = pages[i].SaveAsSVG(
+            var page = pages[i];
+            var svg = page.SaveAsSVG(
                 SVGContextInterpreter.TextOptions.ConvertIntoPathsUsingGlyphs,
-                _linkDestinations
+                _hyperlinkRenderer.Hyperlinks
             );
+            
+            pageSvgs[i] = new SvgPage((float)page.Width, (float)page.Height, svg);
         }
         
-        return pageSvgs;
+        return new SvgDocument(pageSvgs);
     }
 
     public PDFDocument RenderAsPdf(DocumentLayout documentLayout)
@@ -33,33 +34,22 @@ public sealed class VectorDocumentRenderer
         var pages = RenderPages(documentLayout);
         var document = new Document { Pages = pages };
         
-        return document.CreatePDFDocument(linkDestinations: _linkDestinations);
+        return document.CreatePDFDocument(linkDestinations: _hyperlinkRenderer.Hyperlinks);
     }
     
     private List<Page> RenderPages(DocumentLayout documentLayout)
     {
         var styles = new VectorStyleRenderer(documentLayout.Styles);
         
-        var pageRenderer = new VectorPageRenderer(styles);
+        var pageRenderer = new VectorPageRenderer(styles, _hyperlinkRenderer);
         var pageLayouts = documentLayout.Pages;
         
-        var pages = new List<Page>(pageLayouts.Count);
+        var pages = new List<Page>();
         foreach (var pageLayout in pageLayouts)
         {
             pageRenderer.RenderPage(pageLayout, pages);
         }
         
         return pages;
-    }
-
-    public string AddUri(Uri uri)
-    {
-        if (_uriRegistry.TryGetValue(uri, out var id)) return id;
-        id = $"link{_uriIndex++}";
-        
-        _uriRegistry.Add(uri, id);
-        _linkDestinations.Add(id, uri.ToString());
-        
-        return id;
     }
 }

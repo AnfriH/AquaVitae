@@ -11,7 +11,8 @@ namespace AquaVitae.Render.Vector;
 
 public class VectorTextBoxRenderer(
     VectorParagraphRenderer paragraphRenderer,
-    VectorStyleRenderer styleRenderer
+    VectorStyleRenderer styleRenderer,
+    VectorHyperlinkRenderer hyperlinkRenderer
 )
 {
     public PrintPoint RenderTextBox(TextBoxLayout textBoxLayout, Graphics graphics, PrintPoint width)
@@ -66,9 +67,11 @@ public class VectorTextBoxRenderer(
         var innerPage = paragraphRenderer.RenderSinglePage(
             document,
             width.Points,
-            out _,
+            out var hyperlinks,
             out _
         );
+        
+        hyperlinkRenderer.AddHyperlinks(hyperlinks);
         
         paragraphRenderer.Clear();
         return innerPage;
@@ -125,7 +128,7 @@ public class VectorTextBoxRenderer(
                 HyperlinkLayout hyperlinkLayout => new LinkInline(
                     hyperlinkLayout.Uri.ToString(),
                     hyperlinkLayout.Text
-                ),
+                ).AppendChild(new LiteralInline(hyperlinkLayout.Text)),
                 RunLayout runLayout => new LiteralInline(runLayout.Text)
             };
             

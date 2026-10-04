@@ -1,13 +1,15 @@
 using System.Diagnostics;
 using AquaVitae.Layouts;
-using AquaVitae.Layouts.Types;
 using VectSharp;
 
 namespace AquaVitae.Render.Vector;
 
-public class VectorPageRenderer(VectorStyleRenderer styleRenderer)
+public class VectorPageRenderer(
+    VectorStyleRenderer styleRenderer,
+    VectorHyperlinkRenderer hyperlinkRenderer
+)
 {
-    private readonly VectorElementRenderer _elementRenderer = new(styleRenderer);
+    private readonly VectorElementRenderer _elementRenderer = new(styleRenderer, hyperlinkRenderer);
     
     public void RenderPage(PageLayout pageLayout, List<Page> pages)
     {

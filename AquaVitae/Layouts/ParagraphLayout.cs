@@ -8,5 +8,9 @@ public sealed class ParagraphLayout(StyleId<ParagraphStyle> style) : ParagraphLa
 {
     private OptionalList<RunLayoutBase> _runs;
     public IReadOnlyList<RunLayoutBase> Runs => _runs.AsReadOnly();
-    public void AddRun(RunLayoutBase run) => _runs.Add(run);
+    public ParagraphLayout AddRun(RunLayoutBase run)
+    {
+        _runs.Add(run);
+        return this;
+    }
 }
