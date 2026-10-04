@@ -1,39 +1,33 @@
 ﻿using System.Runtime.CompilerServices;
-using AquaVitae.Layouts;
-using AquaVitae.Layouts.Types;
+using AquaVitae.Data;
+using AquaVitae.Outputs;
+using AquaVitae.Render.Docx;
 using AquaVitae.Render.Vector;
+using Tomlyn;
 
 namespace AquaVitae;
 
 public static class Program
 {
-    public static async Task Main()
+    public static async Task Main(string[] args)
     {
-        var documentLayout = new DocumentLayout();
-
-        var page1 = new PageLayout(PageSizes.A4);
-        documentLayout.AddPage(page1);
-
-        var txtBox = new TextBoxLayout(0, 0, PageSizes.A4.Width / 3, PageSizes.A4.Height)
+        if (args.Length < 2) throw new ArgumentException("Not enough arguments provided, requires <cv_toml> <docx_output>");
+        
+        CvData data;
+        await using (var inFile = File.OpenRead(args[0]))
         {
-            FillColor = Color.FromString("#075700")
-        };
+            data = TomlSerializer.Deserialize(inFile, CvDataContext.Default.CvData) ?? throw new Exception();
+        }
         
-        page1.AddPageElement(txtBox);
+        var documentLayout = new CvBuilder(data).Build();
         
-        var pdf = new VectorDocumentRenderer().RenderAsPdf(documentLayout);
+        var svg = new VectorDocumentRenderer().RenderAsSvg(documentLayout);
+        var docxRenderer = new DocxDocumentRenderer(new DocxRendererSettings { IncludeTextColor = false });
         
-        var stream = new MemoryStream();
-        pdf.Write(stream);
-
-        await using var file = File.Open($"{GetProjectDirectory()}/output.pdf", FileMode.Create, FileAccess.ReadWrite);
-        stream.Position = 0;
-        await stream.CopyToAsync(file);
-    }
-    
-    public static string GetProjectDirectory([CallerFilePath] string sourceFilePath = "")
-    {
-        // Returns the directory containing this specific C# source file
-        return Path.GetDirectoryName(sourceFilePath)!; 
+        
+        await using (var outDoc = File.Open(args[1], FileMode.Create, FileAccess.ReadWrite))
+        {
+            docxRenderer.RenderDocument(documentLayout, svg, outDoc);
+        }
     }
 }
