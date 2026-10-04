@@ -1,4 +1,3 @@
-using System.Xml;
 using AquaVitae.Layouts;
 using AquaVitae.Layouts.Abstractions;
 using AquaVitae.Layouts.Types;
@@ -58,17 +57,16 @@ public sealed class DocxPageRenderer(
         sectionProperties.AppendChild(pageSize);
         
         // Set margin sizes to 0
-        // var pageMargin = new PageMargin
-        // {
-        //     Top = 0,
-        //     Left = 0,
-        //     Right = 0,
-        //     Bottom = 0,
-        //     Header = 0,
-        //     Footer = 0,
-        //     Gutter = 0
-        // };
-        // sectionProperties.AppendChild(pageMargin);
+        sectionProperties.AppendChild(new PageMargin
+        {
+            Bottom = 0,
+            Top = 0,
+            Left = 0,
+            Right = 0,
+            Header = 0,
+            Footer = 0,
+            Gutter = 0
+        });
         
         // We include a final paragraph to ensure that every page has at least one non-floating element.
         // Without this, the layout engine tends to munge the last two pages together.
