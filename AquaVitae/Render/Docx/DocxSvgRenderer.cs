@@ -1,5 +1,6 @@
 using System.Xml;
 using AquaVitae.Layouts;
+using AquaVitae.Render.Vector;
 using DocumentFormat.OpenXml.Drawing;
 using DocumentFormat.OpenXml.Drawing.Wordprocessing;
 using DocumentFormat.OpenXml.Office2019.Drawing.SVG;
@@ -21,9 +22,9 @@ public sealed class DocxSvgRenderer(MainDocumentPart mainPart)
     private const string DrawingMlUri = "http://schemas.openxmlformats.org/drawingml/2006/picture";
     private uint _id;
     
-    public Drawing RenderSvg(PageLayout pageLayout, XmlDocument svg)
+    public Drawing RenderSvg(SvgPage svgPage)
     {
-        var relId = AddSvgToDocument(svg);
+        var relId = AddSvgToDocument(svgPage.Svg);
         
         var svgBlip = new SVGBlip { Embed = relId };
 
@@ -36,7 +37,8 @@ public sealed class DocxSvgRenderer(MainDocumentPart mainPart)
         var blip = new Blip();
         blip.AppendChild(blipExtensionList);
 
-        var (width, height) = pageLayout.PageSize;
+        var width = svgPage.Width;
+        var height = svgPage.Height;
         
         var drawing = new Drawing
         {

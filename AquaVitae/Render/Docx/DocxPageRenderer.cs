@@ -1,7 +1,10 @@
 using System.Xml;
 using AquaVitae.Layouts;
 using AquaVitae.Layouts.Abstractions;
+using AquaVitae.Layouts.Types;
+using AquaVitae.Render.Vector;
 using DocumentFormat.OpenXml.Wordprocessing;
+using PageSize = DocumentFormat.OpenXml.Wordprocessing.PageSize;
 
 namespace AquaVitae.Render.Docx;
 
@@ -9,20 +12,15 @@ public sealed class DocxPageRenderer(
     DocxNumberingRenderer numberingRenderer,
     DocxHyperlinkRenderer hyperlinkRenderer,
     DocxStylesRenderer stylesRenderer,
-    DocxSvgRenderer svgRenderer
+    DocxSvgRenderer svgRenderer,
+    DocxRendererSettings settings
 )
 {
-    private DocxParagraphRenderer ParagraphRenderer => field ??= new DocxParagraphRenderer(hyperlinkRenderer, stylesRenderer);
+    private DocxParagraphRenderer ParagraphRenderer => field ??= new DocxParagraphRenderer(hyperlinkRenderer, stylesRenderer, settings);
     private DocxVerticalListRenderer VerticalListRenderer => field ??= new DocxVerticalListRenderer(numberingRenderer, ParagraphRenderer);
     
-    public void RenderPage(PageLayout page, Body body, bool finalPage, XmlDocument? pageSvg)
+    public void RenderPage(Body body, SvgPage svgPage, IReadOnlyList<ParagraphLayoutBase> paragraphs, bool finalPage)
     {
-        var paragraphs = new List<ParagraphLayoutBase>();
-        
-        page.Background?.CollectParagraphs(paragraphs.Add);
-        page.Grid?.CollectParagraphs(paragraphs.Add);
-        page.Foreground?.CollectParagraphs(paragraphs.Add);
-
         foreach (var paragraphLayout in paragraphs.OrderBy(p => p))
         {
             switch (paragraphLayout)
@@ -36,17 +34,14 @@ public sealed class DocxPageRenderer(
             }
         }
 
-        if (pageSvg != null)
-        {
-            var drawing = svgRenderer.RenderSvg(page, pageSvg);
-            var paragraph = body.AppendChild(new Paragraph());
-            paragraph.AppendChild(new Run(drawing));
-        }
+        var drawing = svgRenderer.RenderSvg(svgPage);
+        var svgParagraph = body.AppendChild(new Paragraph());
+        svgParagraph.AppendChild(new Run(drawing));
         
-        RenderPageFormatting(page, body, finalPage);
+        RenderPageFormatting(svgPage.Width, svgPage.Height, body, finalPage);
     }
 
-    private static void RenderPageFormatting(PageLayout page, Body body, bool finalPage)
+    private static void RenderPageFormatting(PrintPoint width, PrintPoint height, Body body, bool finalPage)
     {
         var sectionProperties = new SectionProperties();
         
@@ -55,7 +50,6 @@ public sealed class DocxPageRenderer(
         sectionProperties.AppendChild(sectionType);
         
         // Set page size
-        var (width, height) = page.PageSize;
         var pageSize = new PageSize
         {
             Width = width.ToTwipsUInt(),

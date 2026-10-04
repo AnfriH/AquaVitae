@@ -13,4 +13,14 @@ public sealed class DocumentLayout : LayoutBase
     {
         _pages.Add(page);
     }
+
+    public void CollectParagraphs(Action<ParagraphLayoutBase> callback)
+    {
+        foreach (var pageLayout in Pages)
+        {
+            pageLayout.Background?.CollectParagraphs(callback);
+            pageLayout.Grid?.CollectParagraphs(callback);
+            pageLayout.Foreground?.CollectParagraphs(callback);
+        }
+    }
 }

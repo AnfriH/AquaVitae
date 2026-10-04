@@ -14,7 +14,6 @@ public sealed class VectorElementRenderer
     public VectorElementRenderer(VectorStyleRenderer styleRenderer, VectorHyperlinkRenderer hyperlinkRenderer)
     {
         TextBoxRenderer = new VectorTextBoxRenderer(
-            new VectorParagraphRenderer(styleRenderer),
             styleRenderer,
             hyperlinkRenderer
         );

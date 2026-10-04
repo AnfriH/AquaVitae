@@ -1,3 +1,5 @@
+using AquaVitae.Layouts;
+using AquaVitae.Layouts.Abstractions;
 using AquaVitae.Layouts.Styles;
 using Markdig.Syntax;
 using Markdig.Syntax.Inlines;
@@ -6,31 +8,25 @@ using VectSharp.Markdown;
 
 namespace AquaVitae.Render.Vector;
 
-public sealed class VectorParagraphRenderer(VectorStyleRenderer styleRenderer) : MarkdownRenderer
+public class VectorParagraphRenderer(VectorStyleRenderer styleRenderer) : MarkdownRenderer
 {
     private readonly Dictionary<Inline, StyleId<RunStyle>> _runStyles = new(ReferenceEqualityComparer.Instance);
     private readonly Dictionary<Block, StyleId<ParagraphStyle>> _paragraphStyles = new(ReferenceEqualityComparer.Instance);
     private readonly Dictionary<Block, StyleId<VerticalListStyle>> _verticalListStyles = new(ReferenceEqualityComparer.Instance);
-    
-    public void Clear()
+
+    public virtual void StyleRun(Inline inline, RunLayoutBase layout)
     {
-        _runStyles.Clear();
-        _paragraphStyles.Clear();
+        _runStyles.Add(inline, layout.Style);
     }
 
-    public void StyleRun(Inline inline, StyleId<RunStyle> styleId)
+    public virtual void StyleParagraph(Block block, ParagraphLayoutBase layout)
     {
-        _runStyles.Add(inline, styleId);
+        _paragraphStyles.Add(block, layout.Style);
     }
 
-    public void StyleParagraph(Block block, StyleId<ParagraphStyle> styleId)
+    public virtual void StyleList(Block block, VerticalListLayout listLayout)
     {
-        _paragraphStyles.Add(block, styleId);
-    }
-
-    public void StyleList(Block block, StyleId<VerticalListStyle> styleId)
-    {
-        _verticalListStyles.Add(block, styleId);
+        _verticalListStyles.Add(block, listLayout.ListStyle);
     }
     
     protected override void OnInlineRendering(

@@ -1,16 +1,11 @@
 using AquaVitae.Layouts;
-using AquaVitae.Layouts.Abstractions;
 using AquaVitae.Layouts.Types;
-using Markdig.Parsers;
-using Markdig.Syntax;
-using Markdig.Syntax.Inlines;
 using VectSharp;
 using Margins = VectSharp.Markdown.Margins;
 
 namespace AquaVitae.Render.Vector;
 
 public class VectorTextBoxRenderer(
-    VectorParagraphRenderer paragraphRenderer,
     VectorStyleRenderer styleRenderer,
     VectorHyperlinkRenderer hyperlinkRenderer
 )
@@ -50,19 +45,19 @@ public class VectorTextBoxRenderer(
     {
         var margins = textBoxLayout.InnerMargins;
         
-        paragraphRenderer.Margins = new Margins(
-            margins.Left.Points,
-            margins.Top.Points,
-            margins.Right.Points,
-            margins.Bottom.Points
-        );
-        paragraphRenderer.SpaceAfterParagraph = textBoxLayout.ParagraphSpacing.Points;
-        
-        var document = new MarkdownDocument();
-        foreach (var paragraphLayout in textBoxLayout.Paragraphs)
+        var paragraphRenderer = new VectorParagraphRenderer(styleRenderer)
         {
-            document.Add(RenderParagraphBase(paragraphLayout));
-        }
+            Margins = new Margins(
+                margins.Left.Points,
+                margins.Top.Points,
+                margins.Right.Points,
+                margins.Bottom.Points
+            ),
+            SpaceAfterParagraph = textBoxLayout.ParagraphSpacing.Points
+        };
+        var markdownRenderer = new VectorMarkdownRenderer(paragraphRenderer, styleRenderer);
+
+        var document = markdownRenderer.RenderToDocument(textBoxLayout.Paragraphs);
         
         var innerPage = paragraphRenderer.RenderSinglePage(
             document,
@@ -72,70 +67,6 @@ public class VectorTextBoxRenderer(
         );
         
         hyperlinkRenderer.AddHyperlinks(hyperlinks);
-        
-        paragraphRenderer.Clear();
         return innerPage;
-    }
-
-    private Block RenderParagraphBase(ParagraphLayoutBase paragraphLayoutBase)
-    {
-        Block block = paragraphLayoutBase switch
-        {
-            ParagraphLayout paragraphLayout => RenderParagraph(paragraphLayout),
-            VerticalListLayout verticalListLayout => RenderVerticalList(verticalListLayout)
-        };
-        paragraphRenderer.StyleParagraph(block, paragraphLayoutBase.Style);
-        return block;
-    }
-
-    private ListBlock RenderVerticalList(VerticalListLayout verticalListLayout)
-    {
-        var listStyleId = verticalListLayout.ListStyle;
-        var listStyle = styleRenderer.GetStyle(listStyleId);
-        var parser = new ListBlockParser();
-        var list = new ListBlock(parser)
-        {
-            IsOrdered = listStyle.Ordered
-        };
-        
-        paragraphRenderer.StyleList(list, listStyleId);
-
-        var i = 1;
-        foreach (var paragraphLayout in verticalListLayout.Paragraphs)
-        {
-            var listItem = new ListItemBlock(parser)
-            {
-                Order = i++
-            };
-            listItem.Add(RenderParagraphBase(paragraphLayout));
-            list.Add(listItem);
-        }
-        
-        return list;
-    }
-
-    private ParagraphBlock RenderParagraph(ParagraphLayout paragraphLayout)
-    {
-        // var paragraphStyle = styleRenderer.GetStyle(paragraphLayout.Style);
-        
-        var container = new ContainerInline();
-        var paragraph = new ParagraphBlock { Inline = container };
-        
-        foreach (var runLayoutBase in paragraphLayout.Runs)
-        {
-            Inline inline = runLayoutBase switch
-            {
-                HyperlinkLayout hyperlinkLayout => new LinkInline(
-                    hyperlinkLayout.Uri.ToString(),
-                    hyperlinkLayout.Text
-                ).AppendChild(new LiteralInline(hyperlinkLayout.Text)),
-                RunLayout runLayout => new LiteralInline(runLayout.Text)
-            };
-            
-            paragraphRenderer.StyleRun(inline, runLayoutBase.Style);
-            container.AppendChild(inline);
-        }
-
-        return paragraph;
     }
 }

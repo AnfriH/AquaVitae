@@ -1,13 +1,16 @@
 using AquaVitae.Layouts;
 using AquaVitae.Layouts.Abstractions;
+using AquaVitae.Layouts.Types;
 using DocumentFormat.OpenXml;
 using DocumentFormat.OpenXml.Wordprocessing;
+using Color = DocumentFormat.OpenXml.Wordprocessing.Color;
 
 namespace AquaVitae.Render.Docx;
 
 public class DocxParagraphRenderer(
     DocxHyperlinkRenderer hyperlinkRenderer,
-    DocxStylesRenderer stylesRenderer
+    DocxStylesRenderer stylesRenderer,
+    DocxRendererSettings settings
 )
 {
     public Paragraph RenderParagraph(ParagraphLayout paragraph)
@@ -56,8 +59,17 @@ public class DocxParagraphRenderer(
         {
             Id = relId,
         };
+
+        var run = CreateRun(layout);
+
+        if (!settings.IncludeTextColor)
+        {
+            var runProperties = run.RunProperties!;
+            runProperties.Color = new Color { Val = Colors.Blue.ToString(ColorFormats.Rgb) };
+            runProperties.Underline = new Underline { Val = UnderlineValues.Single };
+        }
         
-        hyperlinkElement.AppendChild(CreateRun(layout));
+        hyperlinkElement.AppendChild(run);
         
         return hyperlinkElement;
     }
