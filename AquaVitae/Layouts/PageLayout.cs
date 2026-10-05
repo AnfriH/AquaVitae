@@ -38,8 +38,8 @@ public enum PageOverflowBehaviour
     PageFit,
     
     /// <summary>
-    /// Overflowing content will result in the page being lengthened to fit the content.
-    /// This is currently not compatible with docx export.
+    /// Overflowing content will result in the page being lengthened to fit the content. This may cause
+    /// printouts to look weird.
     /// </summary>
     Scale
 }
