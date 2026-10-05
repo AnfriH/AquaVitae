@@ -27,7 +27,7 @@ public sealed class DocxDrawingRenderer(MainDocumentPart mainPart, DocxHyperlink
     private const string DrawingMlUri = "http://schemas.openxmlformats.org/drawingml/2006/picture";
     private const string WordprocessingShapeUri = "http://schemas.microsoft.com/office/word/2010/wordprocessingShape";
 
-    private static PrintPoint MetadataTextboxHeight = PrintPoint.FromInches(1);
+    private static PrintPoint MetadataTextboxHeight = PrintPoint.FromInches(2);
     
     private uint _id;
 
@@ -232,7 +232,7 @@ public sealed class DocxDrawingRenderer(MainDocumentPart mainPart, DocxHyperlink
             }
         );
         
-        var startRun = new Run(new Text("This document was created using the AquaVitae project created by Anfri Hayward. " +
+        var startRun = new Run(new Text("This document was rendered using the AquaVitae created by Anfri Hayward. " +
                                         "The source code for this project is available "));
         
         var linkRun = new Run
