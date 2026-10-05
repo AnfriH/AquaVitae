@@ -1,5 +1,4 @@
-﻿using System.Runtime.CompilerServices;
-using AquaVitae.Data;
+﻿using AquaVitae.Data;
 using AquaVitae.Outputs;
 using AquaVitae.Render.Docx;
 using AquaVitae.Render.Vector;

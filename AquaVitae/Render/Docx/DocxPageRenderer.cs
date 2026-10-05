@@ -11,16 +11,41 @@ public sealed class DocxPageRenderer(
     DocxNumberingRenderer numberingRenderer,
     DocxHyperlinkRenderer hyperlinkRenderer,
     DocxStylesRenderer stylesRenderer,
-    DocxSvgRenderer svgRenderer,
+    DocxDrawingRenderer drawingRenderer,
     DocxRendererSettings settings
 )
 {
+    private static readonly PrintPoint Margin = PrintPoint.FromInches(0.5f);
+    
     private DocxParagraphRenderer ParagraphRenderer => field ??= new DocxParagraphRenderer(hyperlinkRenderer, stylesRenderer, settings);
     private DocxVerticalListRenderer VerticalListRenderer => field ??= new DocxVerticalListRenderer(numberingRenderer, ParagraphRenderer);
     
-    public void RenderPage(Body body, SvgPage svgPage, IReadOnlyList<ParagraphLayoutBase> paragraphs, bool finalPage)
+    public void RenderPage(Body body, SvgPage svgPage, IReadOnlyList<ParagraphLayoutBase> contents, bool finalPage)
     {
-        foreach (var paragraphLayout in paragraphs.OrderBy(p => p))
+        RenderVisualContents(body, svgPage);
+        
+        if (finalPage) RenderTextualContents(body, contents, svgPage);
+        
+        RenderPageFormatting(body, svgPage, finalPage);
+    }
+    
+    private void RenderVisualContents(Body body, SvgPage svgPage)
+    {
+        var svgParagraph = body.AppendChild(new Paragraph());
+
+        svgParagraph.AppendChild(new Run(drawingRenderer.CreateSvgPanel(svgPage, 50)));
+
+        foreach (var linkPosition in svgPage.Hyperlinks)
+        {
+            svgParagraph.AppendChild(new Run(drawingRenderer.CreateHyperlinkClickBox(linkPosition, 100)));
+        }
+    }
+
+    private void RenderTextualContents(Body body, IReadOnlyList<ParagraphLayoutBase> contents, SvgPage svgPage)
+    {
+        RenderMetadata(body, svgPage);
+        
+        foreach (var paragraphLayout in contents)
         {
             switch (paragraphLayout)
             {
@@ -32,15 +57,19 @@ public sealed class DocxPageRenderer(
                     break;
             }
         }
-        
-        var drawings = svgRenderer.RenderSvg(svgPage);
-        var svgParagraph = body.AppendChild(new Paragraph());
-        svgParagraph.Append(drawings.Select(d => new Run(d)));
-        
-        RenderPageFormatting(svgPage.Width, svgPage.Height, body, finalPage);
     }
 
-    private static void RenderPageFormatting(PrintPoint width, PrintPoint height, Body body, bool finalPage)
+    private void RenderMetadata(Body body, SvgPage svgPage)
+    {
+        body.AppendChild(new Paragraph())
+            .AppendChild(new Run())
+            .AppendChild(
+                // Text box should fit within the margins.
+                drawingRenderer.CreateMetadataDrawing(svgPage.Width - Margin * 2)
+            );
+    }
+
+    private static void RenderPageFormatting(Body body, SvgPage svgPage, bool finalPage)
     {
         var sectionProperties = new SectionProperties();
         
@@ -51,25 +80,23 @@ public sealed class DocxPageRenderer(
         // Set page size
         var pageSize = new PageSize
         {
-            Width = width.ToTwipsUInt(),
-            Height = height.ToTwipsUInt()
+            Width = svgPage.Width.ToTwipsUInt(),
+            Height = svgPage.Height.ToTwipsUInt()
         };
         sectionProperties.AppendChild(pageSize);
         
-        // Set margin sizes to 0
         sectionProperties.AppendChild(new PageMargin
         {
-            Bottom = 0,
-            Top = 0,
-            Left = 0,
-            Right = 0,
+            Bottom = Margin.ToTwipsInt(),
+            Top = Margin.ToTwipsInt(),
+            Left = Margin.ToTwipsUInt(),
+            Right = Margin.ToTwipsUInt(),
             Header = 0,
             Footer = 0,
             Gutter = 0
         });
         
-        // We include a final paragraph to ensure that every page has at least one non-floating element.
-        // Without this, the layout engine tends to munge the last two pages together.
+        // Attach a page break to the last paragraph. If there are none (somehow), we'll create one.
         if (body.LastChild is not Paragraph paragraph) paragraph = body.AppendChild(new Paragraph());
         
         // If it's the last page of the document, the section properties must be added to the body directly.
@@ -79,6 +106,8 @@ public sealed class DocxPageRenderer(
             return;
         }
 
+        // Elsewise, we add it to the paragraph along with a page break
+        paragraph.AppendChild(new Run(new Break { Type = BreakValues.Page }));
         paragraph.ParagraphProperties = new ParagraphProperties { SectionProperties = sectionProperties };
     }
 }

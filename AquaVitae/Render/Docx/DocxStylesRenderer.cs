@@ -14,8 +14,6 @@ public sealed class DocxStylesRenderer(
     DocxRendererSettings settings
 )
 {
-    private const float ScaleFactor = 0.5f;
-    
     private readonly Dictionary<string, Style> _runStyles = new();
     private readonly Dictionary<string, Style> _paragraphStyles = new();
     
@@ -96,22 +94,21 @@ public sealed class DocxStylesRenderer(
         };
     }
 
-    private static StyleParagraphProperties CreateParagraphStyleLayout(ParagraphStyle style)
+    private static StyleParagraphProperties CreateParagraphStyleLayout(ParagraphStyle _)
     {
-        // Currently, Markdig only supports left aligned paragraphs, so we mirror that here
         var properties = new StyleParagraphProperties
         {
-            Justification = new Justification { Val = JustificationValues.Left },
-        };
-        
-        if (style.LineSpacing.Points > 0)
-        {
-            properties.SpacingBetweenLines = new SpacingBetweenLines
+            // We set the line spacing to the smallest possible non-zero value.
+            // The resulting effect is that all the text is smushed together
+            // onto more or less a single line. This helps to ensure that the
+            // text does not extend beyond the final page.
+            SpacingBetweenLines = new SpacingBetweenLines
             {
-                Before = style.LineSpacing.ToTwipsString()
-            };
-        }
-        
+                Line = "1",
+                LineRule = LineSpacingRuleValues.Exact
+            }
+        };
+
         return properties;
     }
 
@@ -127,9 +124,7 @@ public sealed class DocxStylesRenderer(
             HighAnsi = font.Name
         };
         
-        // We apply a scaling factor to give a safety barrier between
-        // the page's "idealised" size and the page's actual size.
-        properties.FontSize = new FontSize { Val = (style.FontSize * ScaleFactor).ToHalfPointsString() };
+        properties.FontSize = new FontSize { Val = style.FontSize.ToHalfPointsString() };
 
         if (settings.IncludeTextColor)
         {

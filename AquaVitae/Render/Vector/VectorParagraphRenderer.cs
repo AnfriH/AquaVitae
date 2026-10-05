@@ -19,17 +19,17 @@ public class VectorParagraphRenderer(VectorStyleRenderer styleRenderer, PrintPoi
     private readonly List<LinkPosition> _links = [];
     public IReadOnlyList<LinkPosition> Links => _links;
     
-    public virtual void StyleRun(Inline inline, RunLayoutBase layout)
+    public void StyleRun(Inline inline, RunLayoutBase layout)
     {
         _runStyles.Add(inline, layout.Style);
     }
 
-    public virtual void StyleParagraph(Block block, ParagraphLayoutBase layout)
+    public void StyleParagraph(Block block, ParagraphLayoutBase layout)
     {
         _paragraphStyles.Add(block, layout.Style);
     }
 
-    public virtual void StyleList(Block block, VerticalListLayout listLayout)
+    public void StyleList(Block block, VerticalListLayout listLayout)
     {
         _verticalListStyles.Add(block, listLayout.ListStyle);
     }

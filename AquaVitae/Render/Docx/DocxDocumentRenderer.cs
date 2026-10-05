@@ -21,12 +21,11 @@ public sealed class DocxDocumentRenderer(DocxRendererSettings settings)
     private void RenderBody(DocumentLayout document, MainDocumentPart mainPart, IReadOnlyList<SvgPage> svgPages)
     {
         var body = new Body();
-        var pages = document.Pages;
         
         var numberingRenderer = new DocxNumberingRenderer(document, mainPart);
         var hyperlinkRenderer = new DocxHyperlinkRenderer(mainPart);
         var stylesRenderer = new DocxStylesRenderer(document, mainPart, settings);
-        var svgRenderer = new DocxSvgRenderer(mainPart, hyperlinkRenderer);
+        var svgRenderer = new DocxDrawingRenderer(mainPart, hyperlinkRenderer);
         
         var pageRenderer = new DocxPageRenderer(
             numberingRenderer, 
@@ -38,23 +37,15 @@ public sealed class DocxDocumentRenderer(DocxRendererSettings settings)
         
         var paragraphs = new List<ParagraphLayoutBase>();
         document.CollectParagraphs(paragraphs.Add);
+        
+        // We don't use List.Sort here, as it's not stable and can reorder paragraphs with the same priority group.
         var orderedParagraphs = paragraphs.Order().ToList();
-
-        var vectorStyleRenderer = new VectorStyleRenderer(document.Styles);
-        var paragraphsByPage = DocxTextMeasurer.GetParagraphLayoutsByPage(
-            orderedParagraphs,
-            vectorStyleRenderer,
-            svgPages
-        );
 
         for (var i = 0; i < svgPages.Count; i++)
         {
             var svgPage = svgPages[i];
-            IReadOnlyList<ParagraphLayoutBase> pageParagraphs = paragraphsByPage.Count > i 
-                ? paragraphsByPage[i] 
-                : Array.Empty<ParagraphLayoutBase>();
-            
-            pageRenderer.RenderPage(body, svgPage, pageParagraphs, i == svgPages.Count - 1);
+            var finalPage = i == svgPages.Count - 1;
+            pageRenderer.RenderPage(body, svgPage, orderedParagraphs, finalPage);
         }
         
         mainPart.Document = new Document { Body = body };

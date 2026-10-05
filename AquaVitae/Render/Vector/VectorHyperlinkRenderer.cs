@@ -1,5 +1,4 @@
 using AquaVitae.Common;
-using AquaVitae.Layouts.Types;
 
 namespace AquaVitae.Render.Vector;
 

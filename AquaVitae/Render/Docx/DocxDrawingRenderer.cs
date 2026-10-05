@@ -1,4 +1,5 @@
 using System.Xml;
+using AquaVitae.Layouts.Types;
 using AquaVitae.Render.Vector;
 using DocumentFormat.OpenXml.Drawing;
 using DocumentFormat.OpenXml.Drawing.Wordprocessing;
@@ -11,29 +12,24 @@ using BlipFill = DocumentFormat.OpenXml.Drawing.Pictures.BlipFill;
 using NonVisualDrawingProperties = DocumentFormat.OpenXml.Drawing.Pictures.NonVisualDrawingProperties;
 using NonVisualPictureDrawingProperties = DocumentFormat.OpenXml.Drawing.Pictures.NonVisualPictureDrawingProperties;
 using NonVisualPictureProperties = DocumentFormat.OpenXml.Drawing.Pictures.NonVisualPictureProperties;
+using Paragraph = DocumentFormat.OpenXml.Drawing.Paragraph;
 using Picture = DocumentFormat.OpenXml.Drawing.Pictures.Picture;
+using Run = DocumentFormat.OpenXml.Drawing.Run;
+using RunProperties = DocumentFormat.OpenXml.Drawing.RunProperties;
 using ShapeProperties = DocumentFormat.OpenXml.Drawing.Pictures.ShapeProperties;
+using Text = DocumentFormat.OpenXml.Drawing.Text;
 
 namespace AquaVitae.Render.Docx;
 
-public sealed class DocxSvgRenderer(MainDocumentPart mainPart, DocxHyperlinkRenderer hyperlinkRenderer)
+public sealed class DocxDrawingRenderer(MainDocumentPart mainPart, DocxHyperlinkRenderer hyperlinkRenderer)
 {
     private const string SvgExtension = "{96DAC541-7B7A-43D3-8B79-37D633B846F1}";
     private const string DrawingMlUri = "http://schemas.openxmlformats.org/drawingml/2006/picture";
     private const string WordprocessingShapeUri = "http://schemas.microsoft.com/office/word/2010/wordprocessingShape";
+
+    private static PrintPoint MetadataTextboxHeight = PrintPoint.FromInches(1);
+    
     private uint _id;
-
-    public IEnumerable<Drawing> RenderSvg(SvgPage svgPage)
-    {
-        yield return CreateSvgPanel(svgPage);
-
-        if (svgPage.Hyperlinks.Count <= 0) yield break;
-        
-        foreach (var linkPosition in svgPage.Hyperlinks)
-        {
-            yield return CreateHyperlinkClickBox(linkPosition);
-        }
-    }
 
     private string AddSvgToDocument(XmlDocument svg)
     {
@@ -46,7 +42,7 @@ public sealed class DocxSvgRenderer(MainDocumentPart mainPart, DocxHyperlinkRend
         return mainPart.GetIdOfPart(imagePart);
     }
 
-    private Drawing CreateSvgPanel(SvgPage svgPage)
+    public Drawing CreateSvgPanel(SvgPage svgPage, uint layer)
     {
         var relId = AddSvgToDocument(svgPage.Document);
 
@@ -118,7 +114,7 @@ public sealed class DocxSvgRenderer(MainDocumentPart mainPart, DocxHyperlinkRend
                 DistanceFromLeft = 0,
                 DistanceFromRight = 0,
                 SimplePos = false,
-                RelativeHeight = 100, // just below hyperlinks
+                RelativeHeight = layer,
                 BehindDoc = false,
                 Locked = false,
                 LayoutInCell = true,
@@ -127,7 +123,7 @@ public sealed class DocxSvgRenderer(MainDocumentPart mainPart, DocxHyperlinkRend
         };
     }
 
-    private Drawing CreateHyperlinkClickBox(LinkPosition linkPosition)
+    public Drawing CreateHyperlinkClickBox(LinkPosition linkPosition, uint layer)
     {
         var hyperlinkRelId = hyperlinkRenderer.AddHyperlink(linkPosition.Uri);
 
@@ -215,12 +211,77 @@ public sealed class DocxSvgRenderer(MainDocumentPart mainPart, DocxHyperlinkRend
                 DistanceFromLeft = 0,
                 DistanceFromRight = 0,
                 SimplePos = false,
-                RelativeHeight = 200,
+                RelativeHeight = layer,
                 BehindDoc = false,
                 Locked = false,
                 LayoutInCell = true,
                 AllowOverlap = true
             }
         };
+    }
+
+    public Drawing CreateMetadataDrawing(PrintPoint width)
+    {
+        var id = hyperlinkRenderer.AddHyperlink(new Uri("https://example.com"));
+        
+        var linkProperties = new RunProperties(
+            new HyperlinkOnClick
+            {
+                Id = id,
+                Tooltip = "Visit AquaVitae",
+            }
+        );
+        
+        var startRun = new Run(new Text("This document was created using the AquaVitae project created by Anfri Hayward. " +
+                                        "The source code for this project is available "));
+        
+        var linkRun = new Run
+        {
+            Text = new Text("here"),
+            RunProperties = linkProperties
+        };
+        
+        // In the very rare chance that a scraper manages to pull the text from this element, I've added an
+        // instruction prompt to tell it where the actual text in the document begins.
+        var endRun = new Run(new Text(". If this element is visible, it likely indicates that this viewer either " +
+                                      "does not support SVG elements, or does not support absolute positioning on " +
+                                      "image elements. The raw text of the document now follows: "));
+        
+        var drawingParagraph = new Paragraph(startRun, linkRun, endRun);
+        
+        var drawing = new Drawing(
+            new Inline(
+                new Extent
+                {
+                    Cx = width.ToEmusLong(), 
+                    Cy = MetadataTextboxHeight.ToEmusLong()
+                },
+                new DocProperties { Id = _id++, Name = "Metadata Text Box" },
+                new Graphic(
+                    new GraphicData(
+                        new WordprocessingShape(
+                            new ShapeProperties(
+                                new Transform2D(new Extent
+                                {
+                                    Cx = width.ToEmusLong(),
+                                    Cy = MetadataTextboxHeight.ToEmusLong()
+                                }),
+                                new PresetGeometry { Preset = ShapeTypeValues.Rectangle }
+                            ),
+                            new TextShape(new TextBody(
+                                new BodyProperties(),
+                                new ListStyle(),
+                                drawingParagraph
+                            ))
+                        )
+                    )
+                    {
+                        Uri = WordprocessingShapeUri
+                    }
+                )
+            )
+        );
+        
+        return drawing;
     }
 }

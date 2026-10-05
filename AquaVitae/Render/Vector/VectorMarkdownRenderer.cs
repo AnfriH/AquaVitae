@@ -6,7 +6,7 @@ using Markdig.Syntax.Inlines;
 
 namespace AquaVitae.Render.Vector;
 
-public class VectorMarkdownRenderer(VectorParagraphRenderer paragraphRenderer, VectorStyleRenderer styleRenderer)
+public sealed class VectorMarkdownRenderer(VectorParagraphRenderer paragraphRenderer, VectorStyleRenderer styleRenderer)
 {
     public MarkdownDocument RenderToDocument(IEnumerable<ParagraphLayoutBase> paragraphLayouts)
     {
