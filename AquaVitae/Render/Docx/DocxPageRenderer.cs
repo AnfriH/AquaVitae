@@ -15,7 +15,7 @@ public sealed class DocxPageRenderer(
     DocxRendererSettings settings
 )
 {
-    private static readonly PrintPoint Margin = PrintPoint.FromInches(0.5f);
+    private static readonly PrintPoint TopMargin = PrintPoint.FromInches(0.5f);
     
     private DocxParagraphRenderer ParagraphRenderer => field ??= new DocxParagraphRenderer(hyperlinkRenderer, stylesRenderer, settings);
     private DocxVerticalListRenderer VerticalListRenderer => field ??= new DocxVerticalListRenderer(numberingRenderer, ParagraphRenderer);
@@ -65,7 +65,7 @@ public sealed class DocxPageRenderer(
             .AppendChild(new Run())
             .AppendChild(
                 // Text box should fit within the margins.
-                drawingRenderer.CreateMetadataDrawing(svgPage.Width - Margin * 2)
+                drawingRenderer.CreateMetadataDrawing(svgPage.Width)
             );
     }
 
@@ -87,10 +87,10 @@ public sealed class DocxPageRenderer(
         
         sectionProperties.AppendChild(new PageMargin
         {
-            Bottom = Margin.ToTwipsInt(),
-            Top = Margin.ToTwipsInt(),
-            Left = Margin.ToTwipsUInt(),
-            Right = Margin.ToTwipsUInt(),
+            Bottom = 0,
+            Top = TopMargin.ToTwipsInt(),
+            Left = 0,
+            Right = 0,
             Header = 0,
             Footer = 0,
             Gutter = 0

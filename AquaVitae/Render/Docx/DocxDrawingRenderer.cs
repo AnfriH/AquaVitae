@@ -222,7 +222,7 @@ public sealed class DocxDrawingRenderer(MainDocumentPart mainPart, DocxHyperlink
 
     public Drawing CreateMetadataDrawing(PrintPoint width)
     {
-        var id = hyperlinkRenderer.AddHyperlink(new Uri("https://example.com"));
+        var id = hyperlinkRenderer.AddHyperlink(new Uri("https://github.com/AnfriH/AquaVitae"));
         
         var linkProperties = new RunProperties(
             new HyperlinkOnClick
