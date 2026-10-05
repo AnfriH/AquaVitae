@@ -105,7 +105,11 @@ public sealed class DocxStylesRenderer(
             SpacingBetweenLines = new SpacingBetweenLines
             {
                 Line = "1",
-                LineRule = LineSpacingRuleValues.Exact
+                LineRule = LineSpacingRuleValues.Exact,
+                Before = "0",
+                After = "0",
+                AfterAutoSpacing = false,
+                BeforeAutoSpacing = false
             }
         };
 
@@ -124,7 +128,7 @@ public sealed class DocxStylesRenderer(
             HighAnsi = font.Name
         };
         
-        properties.FontSize = new FontSize { Val = style.FontSize.ToHalfPointsString() };
+        properties.FontSize = new FontSize { Val = (style.FontSize / 4).ToHalfPointsString() };
 
         if (settings.IncludeTextColor)
         {
