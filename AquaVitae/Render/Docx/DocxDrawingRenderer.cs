@@ -1,23 +1,14 @@
 using System.Xml;
 using AquaVitae.Layouts.Types;
 using AquaVitae.Render.Vector;
-using DocumentFormat.OpenXml.Drawing;
-using DocumentFormat.OpenXml.Drawing.Wordprocessing;
-using DocumentFormat.OpenXml.Office2010.Word.DrawingShape;
-using DocumentFormat.OpenXml.Office2019.Drawing.SVG;
 using DocumentFormat.OpenXml.Packaging;
-using DocumentFormat.OpenXml.Wordprocessing;
-using Anchor = DocumentFormat.OpenXml.Drawing.Wordprocessing.Anchor;
-using BlipFill = DocumentFormat.OpenXml.Drawing.Pictures.BlipFill;
-using NonVisualDrawingProperties = DocumentFormat.OpenXml.Drawing.Pictures.NonVisualDrawingProperties;
-using NonVisualPictureDrawingProperties = DocumentFormat.OpenXml.Drawing.Pictures.NonVisualPictureDrawingProperties;
-using NonVisualPictureProperties = DocumentFormat.OpenXml.Drawing.Pictures.NonVisualPictureProperties;
-using Paragraph = DocumentFormat.OpenXml.Drawing.Paragraph;
-using Picture = DocumentFormat.OpenXml.Drawing.Pictures.Picture;
-using Run = DocumentFormat.OpenXml.Drawing.Run;
-using RunProperties = DocumentFormat.OpenXml.Drawing.RunProperties;
-using ShapeProperties = DocumentFormat.OpenXml.Drawing.Pictures.ShapeProperties;
-using Text = DocumentFormat.OpenXml.Drawing.Text;
+
+using Drawing = DocumentFormat.OpenXml.Drawing;
+using DrawingPictures = DocumentFormat.OpenXml.Drawing.Pictures;
+using WordProcessingDrawing = DocumentFormat.OpenXml.Drawing.Wordprocessing;
+using DrawingShape = DocumentFormat.OpenXml.Office2010.Word.DrawingShape;
+using SVG = DocumentFormat.OpenXml.Office2019.Drawing.SVG;
+using WordProcessing = DocumentFormat.OpenXml.Wordprocessing;
 
 namespace AquaVitae.Render.Docx;
 
@@ -42,63 +33,65 @@ public sealed class DocxDrawingRenderer(MainDocumentPart mainPart, DocxHyperlink
         return mainPart.GetIdOfPart(imagePart);
     }
 
-    public Drawing CreateSvgPanel(SvgPage svgPage, uint layer)
+    public WordProcessing.Drawing CreateSvgPanel(SvgPage svgPage, uint layer)
     {
         var relId = AddSvgToDocument(svgPage.Document);
 
-        var svgBlip = new SVGBlip { Embed = relId };
+        var svgBlip = new SVG.SVGBlip { Embed = relId };
 
-        var svgExtension = new BlipExtension { Uri = SvgExtension };
+        var svgExtension = new Drawing.BlipExtension { Uri = SvgExtension };
         svgExtension.AppendChild(svgBlip);
 
-        var blipExtensionList = new BlipExtensionList();
+        var blipExtensionList = new Drawing.BlipExtensionList();
         blipExtensionList.AppendChild(svgExtension);
 
-        var blip = new Blip();
+        var blip = new Drawing.Blip();
         blip.AppendChild(blipExtensionList);
         
         var width = svgPage.Width.ToEmusLong();
         var height = svgPage.Height.ToEmusLong();
         
-        return new Drawing
+        return new WordProcessing.Drawing
         {
-            Anchor = new Anchor(
-                new SimplePosition { X = 0, Y = 0 },
-                new HorizontalPosition(new PositionOffset("0"))
+            Anchor = new WordProcessingDrawing.Anchor(
+                new WordProcessingDrawing.SimplePosition { X = 0, Y = 0 },
+                new WordProcessingDrawing.HorizontalPosition(new WordProcessingDrawing.PositionOffset("0"))
                 {
-                    RelativeFrom = HorizontalRelativePositionValues.Page
+                    RelativeFrom = WordProcessingDrawing.HorizontalRelativePositionValues.Page
                 },
-                new VerticalPosition(new PositionOffset("0"))
+                new WordProcessingDrawing.VerticalPosition(new WordProcessingDrawing.PositionOffset("0"))
                 {
-                    RelativeFrom = VerticalRelativePositionValues.Page
+                    RelativeFrom = WordProcessingDrawing.VerticalRelativePositionValues.Page
                 },
-                new Extent { Cx = width, Cy = height },
-                new EffectExtent { LeftEdge = 0, TopEdge = 0, RightEdge = 0, BottomEdge = 0 },
-                new WrapNone(),
-                new DocProperties { Id = _id++, Name = "Svg Image" },
-                new NonVisualGraphicFrameProperties(new GraphicFrameLocks { NoChangeAspect = true }),
-                new Graphic(
-                    new GraphicData(
-                        new Picture(
-                            new NonVisualPictureProperties(
-                                new NonVisualDrawingProperties { Id = _id++, Name = $"Svg Image" },
-                                new NonVisualPictureDrawingProperties()
+                new WordProcessingDrawing.Extent { Cx = width, Cy = height },
+                new WordProcessingDrawing.EffectExtent { LeftEdge = 0, TopEdge = 0, RightEdge = 0, BottomEdge = 0 },
+                new WordProcessingDrawing.WrapNone(),
+                new WordProcessingDrawing.DocProperties { Id = _id++, Name = "Svg Image" },
+                new WordProcessingDrawing.NonVisualGraphicFrameDrawingProperties(
+                    new Drawing.GraphicFrameLocks { NoChangeAspect = true }
+                ),
+                new Drawing.Graphic(
+                    new Drawing.GraphicData(
+                        new DrawingPictures.Picture(
+                            new DrawingPictures.NonVisualPictureProperties(
+                                new DrawingPictures.NonVisualDrawingProperties { Id = _id++, Name = "Svg Image" },
+                                new DrawingPictures.NonVisualPictureDrawingProperties()
                             ),
-                            new BlipFill(new Stretch { FillRectangle = new FillRectangle() })
+                            new DrawingPictures.BlipFill(new Drawing.Stretch { FillRectangle = new Drawing.FillRectangle() })
                             {
                                 Blip = blip
                             },
-                            new ShapeProperties(
-                                new PresetGeometry
+                            new DrawingPictures.ShapeProperties(
+                                new Drawing.PresetGeometry
                                 {
-                                    Preset = ShapeTypeValues.Rectangle
+                                    Preset = Drawing.ShapeTypeValues.Rectangle
                                 }
                             )
                             {
-                                Transform2D = new Transform2D
+                                Transform2D = new Drawing.Transform2D
                                 {
-                                    Offset = new Offset { X = 0, Y = 0 },
-                                    Extents = new Extents { Cx = width, Cy = height }
+                                    Offset = new Drawing.Offset { X = 0, Y = 0 },
+                                    Extents = new Drawing.Extents { Cx = width, Cy = height }
                                 }
                             }
                         )
@@ -123,31 +116,31 @@ public sealed class DocxDrawingRenderer(MainDocumentPart mainPart, DocxHyperlink
         };
     }
 
-    public Drawing CreateHyperlinkClickBox(LinkPosition linkPosition, uint layer)
+    public WordProcessing.Drawing CreateHyperlinkClickBox(LinkPosition linkPosition, uint layer)
     {
         var hyperlinkRelId = hyperlinkRenderer.AddHyperlink(linkPosition.Uri);
 
-        return new Drawing
+        return new WordProcessing.Drawing
         {
-            Anchor = new Anchor(
-                new SimplePosition { X = 0, Y = 0 },
-                new HorizontalPosition(new PositionOffset(linkPosition.X.ToEmusLong().ToString()))
+            Anchor = new WordProcessingDrawing.Anchor(
+                new WordProcessingDrawing.SimplePosition { X = 0, Y = 0 },
+                new WordProcessingDrawing.HorizontalPosition(new WordProcessingDrawing.PositionOffset(linkPosition.X.ToEmusLong().ToString()))
                 {
-                    RelativeFrom = HorizontalRelativePositionValues.Page
+                    RelativeFrom = WordProcessingDrawing.HorizontalRelativePositionValues.Page
                 },
-                new VerticalPosition(new PositionOffset(linkPosition.Y.ToEmusLong().ToString()))
+                new WordProcessingDrawing.VerticalPosition(new WordProcessingDrawing.PositionOffset(linkPosition.Y.ToEmusLong().ToString()))
                 {
-                    RelativeFrom = VerticalRelativePositionValues.Page
+                    RelativeFrom = WordProcessingDrawing.VerticalRelativePositionValues.Page
                 },
-                new Extent
+                new WordProcessingDrawing.Extent
                 {
                     Cx = linkPosition.Width.ToEmusLong(),
                     Cy = linkPosition.Height.ToEmusLong()
                 },
-                new EffectExtent { LeftEdge = 0, TopEdge = 0, RightEdge = 0, BottomEdge = 0 },
-                new WrapNone(),
-                new DocProperties(
-                    new HyperlinkOnClick
+                new WordProcessingDrawing.EffectExtent { LeftEdge = 0, TopEdge = 0, RightEdge = 0, BottomEdge = 0 },
+                new WordProcessingDrawing.WrapNone(),
+                new WordProcessingDrawing.DocProperties(
+                    new Drawing.HyperlinkOnClick
                     {
                         Id = hyperlinkRelId
                     })
@@ -155,38 +148,40 @@ public sealed class DocxDrawingRenderer(MainDocumentPart mainPart, DocxHyperlink
                     Id = _id++,
                     Name = "Hyperlink Click Box"
                 },
-                new NonVisualGraphicFrameProperties(new GraphicFrameLocks { NoChangeAspect = true }),
-                new Graphic(
-                    new GraphicData(
-                        new WordprocessingShape(
-                            new NonVisualDrawingShapeProperties(
-                                new DocumentFormat.OpenXml.Office2010.Word.DrawingShape.NonVisualDrawingProperties
+                new WordProcessingDrawing.NonVisualGraphicFrameDrawingProperties(
+                    new Drawing.GraphicFrameLocks { NoChangeAspect = true }
+                ),
+                new Drawing.Graphic(
+                    new Drawing.GraphicData(
+                        new DrawingShape.WordprocessingShape(
+                            new DrawingShape.NonVisualDrawingShapeProperties(
+                                new DrawingShape.NonVisualDrawingProperties
                                 {
                                     Id = _id++,
                                     Name = "Clickable Link Box"
                                 },
-                                new NonVisualShapeDrawingProperties()
+                                new DrawingShape.NonVisualDrawingShapeProperties()
                             ),
-                            new DocumentFormat.OpenXml.Office2010.Word.DrawingShape.ShapeProperties(
-                                new Transform2D(
-                                    new Offset
+                            new DrawingShape.ShapeProperties(
+                                new Drawing.Transform2D(
+                                    new Drawing.Offset
                                     {
                                         X = 0,
                                         Y = 0
                                     },
-                                    new Extents
+                                    new Drawing.Extents
                                     {
                                         Cx = linkPosition.Width.ToEmusLong(),
                                         Cy = linkPosition.Height.ToEmusLong()
                                     }
                                 ),
-                                new PresetGeometry
+                                new Drawing.PresetGeometry
                                 {
-                                    Preset = ShapeTypeValues.Rectangle,
-                                    AdjustValueList = new AdjustValueList()
+                                    Preset = Drawing.ShapeTypeValues.Rectangle,
+                                    AdjustValueList = new Drawing.AdjustValueList()
                                 },
-                                new SolidFill(
-                                    new RgbColorModelHex(new Alpha
+                                new Drawing.SolidFill(
+                                    new Drawing.RgbColorModelHex(new Drawing.Alpha
                                     {
                                         // Cursed jank value. Basically, LibreOffice will only allow a box to
                                         // be clickable if the transparency is above 0%. As OpenXML alpha is
@@ -220,59 +215,62 @@ public sealed class DocxDrawingRenderer(MainDocumentPart mainPart, DocxHyperlink
         };
     }
 
-    public Drawing CreateMetadataDrawing(PrintPoint width)
+    public WordProcessing.Drawing CreateMetadataDrawing(PrintPoint width)
     {
         var id = hyperlinkRenderer.AddHyperlink(new Uri("https://github.com/AnfriH/AquaVitae"));
         
-        var linkProperties = new RunProperties(
-            new HyperlinkOnClick
+        var linkProperties = new Drawing.RunProperties(
+            new Drawing.HyperlinkOnClick
             {
                 Id = id,
                 Tooltip = "Visit AquaVitae",
             }
         );
         
-        var startRun = new Run(new Text("This document was rendered using the AquaVitae created by Anfri Hayward. " +
-                                        "The source code for this project is available "));
+        var startRun = new Drawing.Run(new Drawing.Text(
+            "This document was rendered using the AquaVitae created by Anfri Hayward. " +
+            "The source code for this project is available "
+        ));
         
-        var linkRun = new Run
+        var linkRun = new Drawing.Run
         {
-            Text = new Text("here"),
+            Text = new Drawing.Text("here"),
             RunProperties = linkProperties
         };
         
         // In the very rare chance that a scraper manages to pull the text from this element, I've added an
         // instruction prompt to tell it where the actual text in the document begins.
-        var endRun = new Run(new Text(". If this element is visible, it likely indicates that this viewer either " +
-                                      "does not support SVG elements, or does not support absolute positioning on " +
-                                      "image elements. The raw text of the document now follows: "));
+        var endRun = new Drawing.Run(new Drawing.Text(
+            ". If this element is visible, it likely indicates that this viewer either " +
+            "does not support SVG elements, or does not support absolute positioning on " +
+            "image elements. The raw text of the document now follows: "
+        ));
         
-        var drawingParagraph = new Paragraph(startRun, linkRun, endRun);
+        var drawingParagraph = new Drawing.Paragraph(startRun, linkRun, endRun);
         
-        var drawing = new Drawing(
-            new Inline(
-                new Extent
+        return new WordProcessing.Drawing(
+            new WordProcessingDrawing.Inline(
+                new WordProcessingDrawing.Extent
                 {
                     Cx = width.ToEmusLong(), 
                     Cy = MetadataTextboxHeight.ToEmusLong()
                 },
-                new DocProperties { Id = _id++, Name = "Metadata Text Box" },
-                new Graphic(
-                    new GraphicData(
-                        new WordprocessingShape(
-                            new ShapeProperties(
-                                new Transform2D(new Extent
+                new WordProcessingDrawing.DocProperties { Id = _id++, Name = "Metadata Text Box" },
+                new Drawing.Graphic(
+                    new Drawing.GraphicData(
+                        new DrawingShape.WordprocessingShape(
+                            new DrawingShape.ShapeProperties(
+                                new Drawing.Transform2D(new Drawing.Extents
                                 {
                                     Cx = width.ToEmusLong(),
                                     Cy = MetadataTextboxHeight.ToEmusLong()
-                                }),
-                                new PresetGeometry { Preset = ShapeTypeValues.Rectangle }
+                                })
                             ),
-                            new TextShape(new TextBody(
-                                new BodyProperties(),
-                                new ListStyle(),
+                            new Drawing.TextShape(new Drawing.TextBody(
+                                new Drawing.BodyProperties(),
+                                new Drawing.ListStyle(),
                                 drawingParagraph
-                            ))
+                            ), new Drawing.UseShapeRectangle())
                         )
                     )
                     {
@@ -281,7 +279,5 @@ public sealed class DocxDrawingRenderer(MainDocumentPart mainPart, DocxHyperlink
                 )
             )
         );
-        
-        return drawing;
     }
 }

@@ -59,6 +59,8 @@ public sealed class DocxStylesRenderer(
         styleElement.StyleParagraphProperties = CreateParagraphStyleLayout(style);
         StylesElement.AppendChild(styleElement);
         
+        _paragraphStyles[style.Id] = styleElement;
+        
         if (style.RunStyle.IsNone) return styleElement;
             
         // If the paragraph style has a run style, we create a base paragraph style
