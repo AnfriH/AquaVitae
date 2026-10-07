@@ -20,13 +20,25 @@ public sealed class DocxPageRenderer(
     private DocxParagraphRenderer ParagraphRenderer => field ??= new DocxParagraphRenderer(hyperlinkRenderer, stylesRenderer, settings);
     private DocxVerticalListRenderer VerticalListRenderer => field ??= new DocxVerticalListRenderer(numberingRenderer, ParagraphRenderer);
     
-    public void RenderPage(Body body, SvgPage svgPage, IReadOnlyList<ParagraphLayoutBase> contents, bool finalPage)
+    public void RenderPage(
+        Body body,
+        SvgPage svgPage,
+        IReadOnlyList<ParagraphLayoutBase> contents,
+        int pageCount,
+        int pageIndex
+    )
     {
+        var isFirstPage = pageIndex == 0;
+        var isLastPage = pageIndex == pageCount - 1;
+        
         RenderVisualContents(body, svgPage);
         
-        if (finalPage) RenderTextualContents(body, contents, svgPage);
+        if (isFirstPage) RenderFallback(body, svgPage.Width - TopMargin);
         
-        RenderPageFormatting(body, svgPage, finalPage);
+        
+        if (isLastPage) RenderTextualContents(body, contents);
+        
+        RenderPageFormatting(body, svgPage, isLastPage);
     }
     
     private void RenderVisualContents(Body body, SvgPage svgPage)
@@ -41,10 +53,8 @@ public sealed class DocxPageRenderer(
         }
     }
 
-    private void RenderTextualContents(Body body, IReadOnlyList<ParagraphLayoutBase> contents, SvgPage svgPage)
+    private void RenderTextualContents(Body body, IReadOnlyList<ParagraphLayoutBase> contents)
     {
-        RenderMetadata(body, svgPage);
-        
         foreach (var paragraphLayout in contents)
         {
             switch (paragraphLayout)
@@ -59,16 +69,16 @@ public sealed class DocxPageRenderer(
         }
     }
 
-    private void RenderMetadata(Body body, SvgPage svgPage)
+    private void RenderFallback(Body body, PrintPoint width)
     {
         body.AppendChild(new Paragraph())
             .AppendChild(new Run())
             .AppendChild(
-                drawingRenderer.CreateMetadataDrawing(svgPage.Width - TopMargin)
+                drawingRenderer.RenderFallbackDrawing(width)
             );
     }
 
-    private static void RenderPageFormatting(Body body, SvgPage svgPage, bool finalPage)
+    private static void RenderPageFormatting(Body body, SvgPage svgPage, bool isLastPage)
     {
         var sectionProperties = new SectionProperties();
         
@@ -99,7 +109,7 @@ public sealed class DocxPageRenderer(
         if (body.LastChild is not Paragraph paragraph) paragraph = body.AppendChild(new Paragraph());
         
         // If it's the last page of the document, the section properties must be added to the body directly.
-        if (finalPage)
+        if (isLastPage)
         {
             body.AppendChild(sectionProperties);
             return;

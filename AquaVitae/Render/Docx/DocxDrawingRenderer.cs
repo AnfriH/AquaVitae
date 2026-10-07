@@ -17,14 +17,13 @@ public sealed class DocxDrawingRenderer(MainDocumentPart mainPart, DocxHyperlink
 {
     private const string SvgExtension = "{96DAC541-7B7A-43D3-8B79-37D633B846F1}";
     private const string DrawingMlPictureUri = "http://schemas.openxmlformats.org/drawingml/2006/picture";
-    private const string DrawingMlShapeUri = "http://schemas.openxmlformats.org/drawingml/2006/main";
     private const string WordprocessingShapeUri = "http://schemas.microsoft.com/office/word/2010/wordprocessingShape";
 
     private const float FallbackAspectRatio = 0.6497696f;
     
     private string? _fallbackRelId;
     private string? _svgFallbackRelId;
-    private uint _id;
+    private uint _id = 1;
 
     private string AddSvgToDocument(XmlDocument svg)
     {
@@ -49,7 +48,9 @@ public sealed class DocxDrawingRenderer(MainDocumentPart mainPart, DocxHyperlink
         var blipExtensionList = new Drawing.BlipExtensionList();
         blipExtensionList.AppendChild(svgExtension);
 
-        // If the image can't be rendered, we show the "fallback" pixel
+        // If the image can't be rendered, we show the "fallback" pixel.
+        // Unfortunately, we can't reuse the clickable fallback, as LibreOffice doesn't
+        // support AlternateContent elements.
         var blip = new Drawing.Blip
         {
             Embed = GetSvgFallbackImageId()
@@ -223,7 +224,7 @@ public sealed class DocxDrawingRenderer(MainDocumentPart mainPart, DocxHyperlink
         };
     }
 
-    public WordProcessing.Drawing CreateMetadataDrawing(PrintPoint width)
+    public WordProcessing.Drawing RenderFallbackDrawing(PrintPoint width)
     {
         var linkId = hyperlinkRenderer.AddHyperlink(new Uri("https://github.com/AnfriH/AquaVitae"));
 
@@ -251,6 +252,11 @@ public sealed class DocxDrawingRenderer(MainDocumentPart mainPart, DocxHyperlink
                     Id = _id++,
                     Name = "Fallback image",
                     HyperlinkOnClick = new Drawing.HyperlinkOnClick
+                    {
+                        Id = linkId,
+                        Tooltip = "Visit AquaVitae's Github"
+                    },
+                    HyperlinkOnHover = new Drawing.HyperlinkOnHover
                     {
                         Id = linkId,
                         Tooltip = "Visit AquaVitae's Github"
@@ -298,7 +304,7 @@ public sealed class DocxDrawingRenderer(MainDocumentPart mainPart, DocxHyperlink
                         }
                     )
                     {
-                        Uri = DrawingMlShapeUri
+                        Uri = DrawingMlPictureUri
                     }
                 }
             }

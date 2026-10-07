@@ -44,8 +44,7 @@ public sealed class DocxDocumentRenderer(DocxRendererSettings settings)
         for (var i = 0; i < svgPages.Count; i++)
         {
             var svgPage = svgPages[i];
-            var finalPage = i == svgPages.Count - 1;
-            pageRenderer.RenderPage(body, svgPage, orderedParagraphs, finalPage);
+            pageRenderer.RenderPage(body, svgPage, orderedParagraphs, svgPages.Count, i);
         }
         
         mainPart.Document = new Document { Body = body };
