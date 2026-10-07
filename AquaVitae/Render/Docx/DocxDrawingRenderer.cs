@@ -1,6 +1,7 @@
 using System.Xml;
 using AquaVitae.Layouts.Types;
 using AquaVitae.Render.Vector;
+using DocumentFormat.OpenXml;
 using DocumentFormat.OpenXml.Packaging;
 
 using Drawing = DocumentFormat.OpenXml.Drawing;
@@ -15,11 +16,14 @@ namespace AquaVitae.Render.Docx;
 public sealed class DocxDrawingRenderer(MainDocumentPart mainPart, DocxHyperlinkRenderer hyperlinkRenderer)
 {
     private const string SvgExtension = "{96DAC541-7B7A-43D3-8B79-37D633B846F1}";
-    private const string DrawingMlUri = "http://schemas.openxmlformats.org/drawingml/2006/picture";
+    private const string DrawingMlPictureUri = "http://schemas.openxmlformats.org/drawingml/2006/picture";
+    private const string DrawingMlShapeUri = "http://schemas.openxmlformats.org/drawingml/2006/main";
     private const string WordprocessingShapeUri = "http://schemas.microsoft.com/office/word/2010/wordprocessingShape";
 
-    private static PrintPoint MetadataTextboxHeight = PrintPoint.FromInches(2);
+    private const float FallbackAspectRatio = 0.6497696f;
     
+    private string? _fallbackRelId;
+    private string? _svgFallbackRelId;
     private uint _id;
 
     private string AddSvgToDocument(XmlDocument svg)
@@ -45,7 +49,11 @@ public sealed class DocxDrawingRenderer(MainDocumentPart mainPart, DocxHyperlink
         var blipExtensionList = new Drawing.BlipExtensionList();
         blipExtensionList.AppendChild(svgExtension);
 
-        var blip = new Drawing.Blip();
+        // If the image can't be rendered, we show the "fallback" pixel
+        var blip = new Drawing.Blip
+        {
+            Embed = GetSvgFallbackImageId()
+        };
         blip.AppendChild(blipExtensionList);
         
         var width = svgPage.Width.ToEmusLong();
@@ -97,7 +105,7 @@ public sealed class DocxDrawingRenderer(MainDocumentPart mainPart, DocxHyperlink
                         )
                     )
                     {
-                        Uri = DrawingMlUri
+                        Uri = DrawingMlPictureUri
                     }
                 )
             )
@@ -217,67 +225,112 @@ public sealed class DocxDrawingRenderer(MainDocumentPart mainPart, DocxHyperlink
 
     public WordProcessing.Drawing CreateMetadataDrawing(PrintPoint width)
     {
-        var id = hyperlinkRenderer.AddHyperlink(new Uri("https://github.com/AnfriH/AquaVitae"));
-        
-        var linkProperties = new Drawing.RunProperties(
-            new Drawing.HyperlinkOnClick
-            {
-                Id = id,
-                Tooltip = "Visit AquaVitae",
-            }
-        );
-        
-        var startRun = new Drawing.Run(new Drawing.Text(
-            "This document was rendered using the AquaVitae created by Anfri Hayward. " +
-            "The source code for this project is available "
-        ));
-        
-        var linkRun = new Drawing.Run
+        var linkId = hyperlinkRenderer.AddHyperlink(new Uri("https://github.com/AnfriH/AquaVitae"));
+
+        var widthEmus = width.ToEmusLong();
+        var heightEmus = (FallbackAspectRatio * width).ToEmusLong();
+
+        return new WordProcessing.Drawing
         {
-            Text = new Drawing.Text("here"),
-            RunProperties = linkProperties
-        };
-        
-        // In the very rare chance that a scraper manages to pull the text from this element, I've added an
-        // instruction prompt to tell it where the actual text in the document begins.
-        var endRun = new Drawing.Run(new Drawing.Text(
-            ". If this element is visible, it likely indicates that this viewer either " +
-            "does not support SVG elements, or does not support absolute positioning on " +
-            "image elements. The raw text of the document now follows: "
-        ));
-        
-        var drawingParagraph = new Drawing.Paragraph(startRun, linkRun, endRun);
-        
-        return new WordProcessing.Drawing(
-            new WordProcessingDrawing.Inline(
-                new WordProcessingDrawing.Extent
+            Inline = new WordProcessingDrawing.Inline
+            {
+                Extent = new WordProcessingDrawing.Extent
                 {
-                    Cx = width.ToEmusLong(), 
-                    Cy = MetadataTextboxHeight.ToEmusLong()
+                    Cx = widthEmus, 
+                    Cy = heightEmus
                 },
-                new WordProcessingDrawing.DocProperties { Id = _id++, Name = "Metadata Text Box" },
-                new Drawing.Graphic(
-                    new Drawing.GraphicData(
-                        new DrawingShape.WordprocessingShape(
-                            new DrawingShape.ShapeProperties(
-                                new Drawing.Transform2D(new Drawing.Extents
+                EffectExtent = new WordProcessingDrawing.EffectExtent
+                {
+                    LeftEdge = 0L, 
+                    TopEdge = 0L, 
+                    RightEdge = 0L, 
+                    BottomEdge = 0L
+                },
+                DocProperties = new WordProcessingDrawing.DocProperties
+                {
+                    Id = _id++,
+                    Name = "Fallback image",
+                    HyperlinkOnClick = new Drawing.HyperlinkOnClick
+                    {
+                        Id = linkId,
+                        Tooltip = "Visit AquaVitae's Github"
+                    }
+                },
+                NonVisualGraphicFrameDrawingProperties = new WordProcessingDrawing.NonVisualGraphicFrameDrawingProperties
+                {
+                    GraphicFrameLocks = new Drawing.GraphicFrameLocks { NoChangeAspect = true }
+                },
+                Graphic = new Drawing.Graphic
+                {
+                    GraphicData = new Drawing.GraphicData(
+                        new DrawingPictures.Picture
+                        {
+                            NonVisualPictureProperties = new DrawingPictures.NonVisualPictureProperties
+                            {
+                                NonVisualDrawingProperties = new DrawingPictures.NonVisualDrawingProperties
                                 {
-                                    Cx = width.ToEmusLong(),
-                                    Cy = MetadataTextboxHeight.ToEmusLong()
-                                })
-                            ),
-                            new Drawing.TextShape(new Drawing.TextBody(
-                                new Drawing.BodyProperties(),
-                                new Drawing.ListStyle(),
-                                drawingParagraph
-                            ), new Drawing.UseShapeRectangle())
-                        )
+                                    Id = _id++,
+                                    Name = "Fallback image PNG"
+                                },
+                                NonVisualPictureDrawingProperties = new DrawingPictures.NonVisualPictureDrawingProperties()
+                            },
+                            BlipFill = new DrawingPictures.BlipFill(
+                                new Drawing.Stretch
+                                {
+                                    FillRectangle = new Drawing.FillRectangle()
+                                }    
+                            )
+                            {
+                                Blip = new Drawing.Blip
+                                {
+                                    Embed = GetFallbackImageId(),
+                                    CompressionState = Drawing.BlipCompressionValues.Screen
+                                }
+                            },
+                            ShapeProperties = new DrawingPictures.ShapeProperties
+                            {
+                                Transform2D = new Drawing.Transform2D
+                                {
+                                    Offset = new Drawing.Offset { X = 0, Y = 0 },
+                                    Extents = new Drawing.Extents { Cx = widthEmus, Cy = heightEmus }
+                                }
+                            }
+                        }
                     )
                     {
-                        Uri = WordprocessingShapeUri
+                        Uri = DrawingMlShapeUri
                     }
-                )
-            )
-        );
+                }
+            }
+        };
+    }
+    
+    private string GetFallbackImageId()
+    {
+        if (_fallbackRelId != null) return _fallbackRelId;
+        var imagePart = mainPart.AddImagePart(ImagePartType.Png);
+        using (var stream = File.OpenRead(Path.Combine(AppContext.BaseDirectory, "Resources", "oops.png")))
+        {
+            imagePart.FeedData(stream);
+        }
+
+        _fallbackRelId = mainPart.GetIdOfPart(imagePart);
+        return _fallbackRelId;
+    }
+
+    /// <summary>
+    /// Loads a 1x1 transparent image to use as a fallback for SVG images.
+    /// </summary>
+    private string GetSvgFallbackImageId()
+    {
+        if (_svgFallbackRelId != null) return _svgFallbackRelId;
+        var imagePart = mainPart.AddImagePart(ImagePartType.Png);
+        using (var stream = File.OpenRead(Path.Combine(AppContext.BaseDirectory, "Resources", "1x1.png")))
+        {
+            imagePart.FeedData(stream);
+        }
+
+        _svgFallbackRelId = mainPart.GetIdOfPart(imagePart);
+        return _svgFallbackRelId;
     }
 }

@@ -64,8 +64,7 @@ public sealed class DocxPageRenderer(
         body.AppendChild(new Paragraph())
             .AppendChild(new Run())
             .AppendChild(
-                // Text box should fit within the margins.
-                drawingRenderer.CreateMetadataDrawing(svgPage.Width)
+                drawingRenderer.CreateMetadataDrawing(svgPage.Width - TopMargin)
             );
     }
 

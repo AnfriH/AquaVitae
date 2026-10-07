@@ -19,4 +19,13 @@
       <PackageReference Include="VectSharp.SVG" Version="1.10.3-a3" />
     </ItemGroup>
 
+    <ItemGroup>
+      <None Update="Resources\oops.png">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
+      <None Update="Resources\1x1.png">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
+    </ItemGroup>
+
 </Project>
