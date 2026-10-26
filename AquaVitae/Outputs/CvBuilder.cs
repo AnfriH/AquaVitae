@@ -1,6 +1,5 @@
 using AquaVitae.Data;
 using AquaVitae.Layouts;
-using AquaVitae.Layouts.Abstractions;
 using AquaVitae.Layouts.Grids;
 using AquaVitae.Layouts.Types;
 
@@ -18,7 +17,7 @@ public sealed class CvBuilder
     private readonly DocumentLayout _documentLayout;
     private readonly CvStylesCollection _styles;
 
-    private static readonly Margins DefaultMargins = new(18, 18, 18, 18);
+    private static readonly Margins DefaultMargins = new(0, 36, 18, 18);
     private static readonly Margins LeftHeadingMargins = new(3, -6, 18, 18);
     
     private static readonly PrintPoint LeftWidth = PageSizes.A4.Width / 3;
@@ -308,12 +307,6 @@ public sealed class CvBuilder
             responsePara.AddRun(new RunLayout(value, _styles.LeftParagraph));
         }
     }
-    
-    // private PageLayout BuildSecondPage()
-    // {
-    //     var pageLayout = CreatePageTemplate();
-    //     return pageLayout;
-    // }
 
     private PageLayout CreatePageTemplate(CompiledGridLayout gridLayout)
     {
@@ -321,7 +314,13 @@ public sealed class CvBuilder
         {
             Grid = gridLayout,
             Background = new CanvasLayout(),
-            OverflowBehaviour = PageOverflowBehaviour.PageFit
+            OverflowBehaviour = PageOverflowBehaviour.PageFit,
+            Margins = new Margins(
+                18, 
+                9,
+                0,
+                0
+            )
         };
 
         var backgroundGrid = new TableBuilder(1, 2);

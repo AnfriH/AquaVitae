@@ -1,4 +1,3 @@
-using System.Xml.Linq;
 using AquaVitae.Layouts;
 using VectSharp;
 using VectSharp.PDF;
@@ -58,12 +57,11 @@ public sealed class VectorDocumentRenderer
     {
         var styles = new VectorStyleRenderer(documentLayout.Styles);
         
-        var pageRenderer = new VectorPageRenderer(styles);
         var pageLayouts = documentLayout.Pages;
         
         foreach (var pageLayout in pageLayouts)
         {
-            pageRenderer.RenderPage(pageLayout, addPageCallback);
+            new VectorPageRenderer(styles, pageLayout, addPageCallback).RenderPage();
         }
     }
 }

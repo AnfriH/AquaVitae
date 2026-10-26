@@ -5,100 +5,163 @@ using VectSharp;
 
 namespace AquaVitae.Render.Vector;
 
-public class VectorPageRenderer(
-    VectorStyleRenderer styleRenderer
-)
+public class VectorPageRenderer
 {
-    public void RenderPage(PageLayout pageLayout, Action<Page, VectorHyperlinkRenderer> addPageCallback)
+    private readonly VectorHyperlinkRenderer _hyperlinkRenderer = new();
+    private readonly VectorElementRenderer _elementRenderer;
+    private readonly Graphics _foregroundGraphics = new();
+    private readonly Graphics _backgroundGraphics = new();
+    
+    private readonly VectorStyleRenderer _styleRenderer;
+    private readonly PageLayout _pageLayout;
+    private readonly Action<Page, VectorHyperlinkRenderer> _addPageCallback;
+    
+    // Margin properties
+    private PrintPoint LeftMargin => _pageLayout.Margins.Left;
+    private PrintPoint RightMargin => _pageLayout.Margins.Right;
+    private PrintPoint TopMargin => _pageLayout.Margins.Top;
+    private PrintPoint BottomMargin => _pageLayout.Margins.Bottom;
+    
+    // Page sizing properties
+    private PrintPoint PageWidth => _pageLayout.PageSize.Width;
+    private PrintPoint PageHeight => _pageLayout.PageSize.Height;
+    private PrintPoint ContentsWidth { get; }
+    private PrintPoint ContentsHeight { get; }
+    
+    public VectorPageRenderer(VectorStyleRenderer styleRenderer,
+        PageLayout pageLayout,
+        Action<Page, VectorHyperlinkRenderer> addPageCallback)
     {
-        var hyperlinkRenderer = new VectorHyperlinkRenderer();
-        var elementRenderer = new VectorElementRenderer(styleRenderer, hyperlinkRenderer);
-        var (width, height) = pageLayout.PageSize;
+        _styleRenderer = styleRenderer;
+        _pageLayout = pageLayout;
+        _addPageCallback = addPageCallback;
+        _elementRenderer = new VectorElementRenderer(styleRenderer, _hyperlinkRenderer);
         
-        var backgroundGraphics = new Graphics();
-        var graphics = new Graphics();
+        ContentsWidth = PrintPoint.Zero.Max(PageWidth - LeftMargin - RightMargin);
+        ContentsHeight = PrintPoint.Zero.Max(PageHeight - TopMargin - BottomMargin);
+    }
 
-        var pageConstraints = new LayoutConstraints(0, 0, width, height);
-        var actualPageHeight = PrintPoint.Zero;
+    public void RenderPage()
+    {
+        var foregroundHeight = PrintPoint.Zero;
+        var backgroundHeight = PrintPoint.Zero;
         
         // Render the layers onto the page canvas
-        var background = pageLayout.Background;
+        var background = _pageLayout.Background;
         if (background != null)
         {
-            actualPageHeight = elementRenderer.CanvasRenderer.RenderCanvas(
-                background, 
-                backgroundGraphics, 
-                pageConstraints
-            ).Max(actualPageHeight);
+            backgroundHeight = _elementRenderer.CanvasRenderer.RenderCanvas(
+                background,
+                _backgroundGraphics,
+                new LayoutConstraints(0, 0, PageWidth, PageHeight)
+            );
         }
         
-        var grid = pageLayout.Grid;
+        var grid = _pageLayout.Grid;
         if (grid != null)
         {
-            actualPageHeight = new VectorGridRenderer(
+            foregroundHeight = new VectorGridRenderer(
                 grid,
-                graphics,
-                pageConstraints,
-                elementRenderer,
-                pageLayout.OverflowBehaviour
-            ).RenderGrid().Max(actualPageHeight);
+                _foregroundGraphics,
+                new LayoutConstraints(0, 0, ContentsWidth, ContentsHeight),
+                _elementRenderer,
+                _pageLayout.OverflowBehaviour
+            ).RenderGrid();
         }
         
-        var foreground = pageLayout.Foreground;
+        var foreground = _pageLayout.Foreground;
         if (foreground != null)
         {
-            actualPageHeight = elementRenderer.CanvasRenderer.RenderCanvas(
+            foregroundHeight = _elementRenderer.CanvasRenderer.RenderCanvas(
                 foreground,
-                graphics,
-                pageConstraints
-            ).Max(actualPageHeight);
+                _foregroundGraphics,
+                new LayoutConstraints(0, 0, ContentsWidth, ContentsHeight)
+            ).Max(foregroundHeight);
         }
         
-        switch (pageLayout.OverflowBehaviour)
+        switch (_pageLayout.OverflowBehaviour)
         {
             case PageOverflowBehaviour.Scale:
             {
-                RenderSinglePage(height.Max(actualPageHeight));
+                RenderScaledPage(backgroundHeight, foregroundHeight);
                 return;
             }
             case PageOverflowBehaviour.Truncate:
             {
-                RenderSinglePage(height.Points);
+                RenderTruncatedPage();
                 return;
             }
             case PageOverflowBehaviour.Continuous:
             case PageOverflowBehaviour.PageFit:
                 // Elsewise, we split the page up into multiple pieces
-                var pageCount = (int)MathF.Ceiling(actualPageHeight / height);
-                for (var i = 0; i < pageCount; i++)
-                {
-                    var page = new Page(width.Points, height.Points)
-                    {
-                        Background = pageLayout.PageColor.ToVectSharpColor()
-                    };
-                    var pageGraphics = page.Graphics;
-            
-                    // We repeat the background graphics for every page
-                    pageGraphics.DrawGraphics(0, 0, backgroundGraphics);
-                    pageGraphics.DrawGraphics(0, -height.Points * i, graphics);
-                    pageGraphics.Crop(new Rectangle(0, 0, width.Points, height.Points));
-            
-                    addPageCallback(page, hyperlinkRenderer);
-                }
+                //var pageCount = (int)MathF.Ceiling(actualPageHeight / height);
+                RenderMultiplePages(foregroundHeight);
                 return;
             default:
                 throw new UnreachableException();
         }
+    }
+
+    private void RenderScaledPage(PrintPoint backgroundHeight, PrintPoint foregroundHeight)
+    {
+        var pageHeight = PageHeight.Max(backgroundHeight).Max(foregroundHeight + TopMargin + BottomMargin);
         
-        void RenderSinglePage(PrintPoint pageHeight)
+        var page = new Page(PageWidth.Points, pageHeight.Points)
         {
-            var page = new Page(width.Points, pageHeight.Points)
-            {
-                Background = pageLayout.PageColor.ToVectSharpColor(),
-                Graphics = backgroundGraphics
-            };
-            page.Graphics.DrawGraphics(0, 0, graphics);
-            addPageCallback(page, hyperlinkRenderer);
+            Background = _pageLayout.PageColor.ToVectSharpColor()
+        };
+        
+        page.Graphics.DrawGraphics(0, 0, _backgroundGraphics);
+        page.Graphics.DrawGraphics(LeftMargin.Points, TopMargin.Points, _foregroundGraphics);
+        
+        AddPage(page);
+    }
+
+    private void RenderTruncatedPage()
+    {
+        _backgroundGraphics.Crop(new Rectangle(0, 0, PageWidth.Points, PageHeight.Points));
+        _foregroundGraphics.Crop(new Rectangle(0, 0, ContentsWidth.Points, ContentsHeight.Points));
+        
+        var page = new Page(PageWidth.Points, PageHeight.Points)
+        {
+            Background = _pageLayout.PageColor.ToVectSharpColor()
+        };
+        
+        page.Graphics.DrawGraphics(0, 0, _backgroundGraphics);
+        page.Graphics.DrawGraphics(LeftMargin.Points, TopMargin.Points, _foregroundGraphics);
+        
+        AddPage(page);
+    }
+
+    private void RenderMultiplePages(PrintPoint foregroundHeight)
+    {
+        var pagesRequired = (int)MathF.Ceiling(foregroundHeight / ContentsHeight);
+        var background = _pageLayout.PageColor.ToVectSharpColor();
+
+        for (var i = 0; i < pagesRequired; i++)
+        {
+            var page = new Page(PageWidth.Points, PageHeight.Points) { Background = background };
+            
+            // Background graphics are repeated per page
+            page.Graphics.DrawGraphics(0, 0, _backgroundGraphics);
+
+            // Foreground graphics are spread across the pages
+            var pageForegroundGraphics = new Graphics();
+            pageForegroundGraphics.DrawGraphics(
+                0, 
+                -i * (ContentsHeight.Points + VectorGridRenderer.PageBuffer.Points),
+                _foregroundGraphics
+            );
+            pageForegroundGraphics.Crop(new Rectangle(0, 0, ContentsWidth.Points, ContentsHeight.Points));
+            
+            page.Graphics.DrawGraphics(LeftMargin.Points, TopMargin.Points, pageForegroundGraphics);
+            
+            AddPage(page);
         }
+    }
+
+    private void AddPage(Page page)
+    {
+        _addPageCallback(page, _hyperlinkRenderer);
     }
 }

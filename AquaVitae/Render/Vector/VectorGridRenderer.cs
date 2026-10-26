@@ -8,6 +8,8 @@ namespace AquaVitae.Render.Vector;
 
 public sealed class VectorGridRenderer
 {
+    public static readonly PrintPoint PageBuffer = PrintPoint.FromPoints(1);
+    
     private readonly CompiledGridLayout _gridLayout;
     private readonly Graphics _graphics;
     private readonly LayoutConstraints _constraints;
@@ -136,7 +138,7 @@ public sealed class VectorGridRenderer
             // shift it down to the next page
             if (height > remainingHeight && height < _constraints.Height)
             {
-                yPosition += remainingHeight;
+                yPosition += remainingHeight + PageBuffer;
             }
         }
         
