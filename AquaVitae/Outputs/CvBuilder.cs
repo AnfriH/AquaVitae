@@ -1,3 +1,4 @@
+using System.Text;
 using AquaVitae.Data;
 using AquaVitae.Layouts;
 using AquaVitae.Layouts.Grids;
@@ -55,10 +56,11 @@ public sealed class CvBuilder
         // Left side
         leftBuilder
             .AddCell(new ElementCell(BuildTitle(), 0, 0))
-            .AddCell(new ElementCell(BuildLeftHeading("Contact"), 1, 0))
+            .AddCell(new ElementCell(BuildLeftHeading("Contact", 0), 1, 0))
             .AddCell(new ElementCell(BuildLeftContact(), 2, 0))
             .AddCell(new ElementCell(BuildLeftSkills("Technical Skills", _data.Skills.Technical), 3, 0))
-            .AddCell(new ElementCell(BuildLeftSkills("Soft Skills", _data.Skills.Soft), 4, 0));
+            .AddCell(new ElementCell(BuildLeftSkills("Soft Skills", _data.Skills.Soft), 4, 0))
+            .AddCell(new ElementCell(BuildLeftLanguages(), 5, 0));
         
         // Right side
         var i = 0;
@@ -91,7 +93,7 @@ public sealed class CvBuilder
         {
             InnerMargins = LeftHeadingMargins
         };
-        var titlePara = new ParagraphLayout(_styles.Paragraph2) { Priority = 1 };
+        var titlePara = new ParagraphLayout(_styles.Paragraph2) { Priority = 3 };
         titlePara.AddRun(new RunLayout(experience.Role, _styles.RightHeading));
         titleTextbox.AddParagraph(titlePara);
 
@@ -102,7 +104,7 @@ public sealed class CvBuilder
             InnerMargins = LeftHeadingMargins
         };
         
-        var datesPara = new ParagraphLayout(_styles.Paragraph2) { Priority = 1 };
+        var datesPara = new ParagraphLayout(_styles.Paragraph2) { Priority = 3 };
         datesPara.AddRun(new RunLayout($"{experience.GetStartDate():yyyy-MM} - {experience.GetEndDate()?.ToString("yyyy-MM") ?? "current"}", _styles.RightParagraph));
         
         datesLayout.AddParagraph(datesPara);
@@ -113,7 +115,7 @@ public sealed class CvBuilder
         {
             InnerMargins = LeftHeadingMargins
         };
-        var rolePara = new ParagraphLayout(_styles.Paragraph2) { Priority = 1 };
+        var rolePara = new ParagraphLayout(_styles.Paragraph2) { Priority = 3 };
         roleLayout.AddParagraph(rolePara);
         
         rolePara.AddRun(new RunLayout(experience.Company, _styles.RightParagraph));
@@ -124,7 +126,7 @@ public sealed class CvBuilder
             InnerMargins = RightBulletMargins
         };
         
-        var respPara = new VerticalListLayout(_styles.Paragraph2, _styles.RightList) { Priority = 1 };
+        var respPara = new VerticalListLayout(_styles.Paragraph2, _styles.RightList) { Priority = 3 };
         respLayout.AddParagraph(respPara);
 
         foreach (var resp in experience.Responsibilities)
@@ -146,7 +148,7 @@ public sealed class CvBuilder
         {
             InnerMargins = LeftHeadingMargins
         };
-        var titlePara = new ParagraphLayout(_styles.Paragraph2) { Priority = 1 };
+        var titlePara = new ParagraphLayout(_styles.Paragraph2) { Priority = 3 };
         titlePara.AddRun(new RunLayout(educationData.Qualification, _styles.RightHeading));
         titleTextbox.AddParagraph(titlePara);
 
@@ -157,7 +159,7 @@ public sealed class CvBuilder
             InnerMargins = LeftHeadingMargins
         };
         
-        var datesPara = new ParagraphLayout(_styles.Paragraph2) { Priority = 1 };
+        var datesPara = new ParagraphLayout(_styles.Paragraph2) { Priority = 3 };
         datesPara.AddRun(new RunLayout($"{educationData.GetCompletedDate():yyyy-MM}", _styles.RightParagraph));
         
         datesLayout.AddParagraph(datesPara);
@@ -168,7 +170,7 @@ public sealed class CvBuilder
         {
             InnerMargins = RightBulletMargins
         };
-        var rolePara = new ParagraphLayout(_styles.Paragraph2) { Priority = 1 };
+        var rolePara = new ParagraphLayout(_styles.Paragraph2) { Priority = 3 };
         roleLayout.AddParagraph(rolePara);
         
         rolePara.AddRun(new RunLayout(educationData.Institution, _styles.RightParagraph));
@@ -193,7 +195,7 @@ public sealed class CvBuilder
         };
         headingGrid.AddCell(new ElementCell(textBox, 1, 0));
         
-        var headingPara = Para();
+        var headingPara = new ParagraphLayout(_styles.Paragraph2) { Priority = 3 };
         textBox.AddParagraph(headingPara);
         
         headingPara.AddRun(new RunLayout(heading, _styles.RightSection));
@@ -214,8 +216,15 @@ public sealed class CvBuilder
             InnerMargins = BlurbMargins,
             ParagraphSpacing = 0.5f
         };
+        
+        // We add a sneaky contextual que to LLMs to make it easier for them to find the blurb in the document.
+        // This doesn't render in the visual document component. It's best to use this sparingly, as it can
+        // look like keyword stuffing from the outside!
+        var blurbTitlePara = new ParagraphLayout(_styles.Paragraph2) { Hidden = true, Priority = 1 };
+        textBox.AddParagraph(blurbTitlePara);
+        blurbTitlePara.AddRun(new RunLayout("Blurb", _styles.RightSection));
 
-        var blurbPara = new ParagraphLayout(_styles.Paragraph2);
+        var blurbPara = new ParagraphLayout(_styles.Paragraph2) { Priority = 1 };
         textBox.AddParagraph(blurbPara);
         
         blurbPara.AddRun(new RunLayout(_data.Profile.Blurb, _styles.RightParagraph));
@@ -226,7 +235,7 @@ public sealed class CvBuilder
     {
         var gridLayout = new TableBuilder(1);
 
-        gridLayout.AddCell(new ElementCell(BuildLeftHeading(heading), 0, 0));
+        gridLayout.AddCell(new ElementCell(BuildLeftHeading(heading, 2), 0, 0));
         
         var textBox = new TextBoxLayout
         {
@@ -236,9 +245,45 @@ public sealed class CvBuilder
 
         foreach (var skill in skills)
         {
-            var skillPara = Para();
+            var skillPara = Para(2);
             textBox.AddParagraph(skillPara);
             skillPara.AddRun(new RunLayout(skill, _styles.LeftParagraph));
+        }
+
+        gridLayout.AddCell(new ElementCell(textBox, 1, 0));
+        
+        return gridLayout.Compile();
+    }
+    
+    private CompiledGridLayout BuildLeftLanguages()
+    {
+        var gridLayout = new TableBuilder(1);
+
+        gridLayout.AddCell(new ElementCell(BuildLeftHeading("Languages", 2), 0, 0));
+        
+        var textBox = new TextBoxLayout
+        {
+            InnerMargins = DefaultMargins,
+            ParagraphSpacing = 0.5f
+        };
+
+        var sb = new StringBuilder();
+        
+        foreach (var language in _data.ProgrammingLanguages)
+        {
+            var skillPara = Para(2);
+            textBox.AddParagraph(skillPara);
+
+            sb.Append(language.Name);
+            sb.Append("  ");
+            for (var i = 0; i < (int)language.SkillLevel; i++)
+            {
+                sb.Append('◊');
+            }
+            
+            skillPara.AddRun(new RunLayout(sb.ToString(), _styles.LeftParagraph));
+
+            sb.Clear();
         }
 
         gridLayout.AddCell(new ElementCell(textBox, 1, 0));
@@ -254,12 +299,12 @@ public sealed class CvBuilder
             ParagraphSpacing = -0.25f
         };
         
-        var namePara = Para();
+        var namePara = Para(0);
         textBox.AddParagraph(namePara);
         
         namePara.AddRun(new RunLayout(_data.Profile.Name, _styles.LeftName));
 
-        var rolePara = Para();
+        var rolePara = Para(0);
         textBox.AddParagraph(rolePara);
         
         rolePara.AddRun(new RunLayout(_data.Profile.Role, _styles.LeftParagraph));
@@ -267,7 +312,7 @@ public sealed class CvBuilder
         return textBox;
     }
 
-    private TextBoxLayout BuildLeftHeading(string heading)
+    private TextBoxLayout BuildLeftHeading(string heading, int priority = 0)
     {
         var textBox = new TextBoxLayout
         {
@@ -276,7 +321,7 @@ public sealed class CvBuilder
             FillColor = _data.Style.SecondaryColor
         };
         
-        var headingPara = Para();
+        var headingPara = Para(priority);
         textBox.AddParagraph(headingPara);
         
         headingPara.AddRun(new RunLayout(heading, _styles.LeftHeading));
@@ -302,11 +347,11 @@ public sealed class CvBuilder
         
         void AddDetail(string name, string value)
         {
-            var detailPara = Para();
+            var detailPara = Para(0);
             textBox.AddParagraph(detailPara);
             detailPara.AddRun(new RunLayout(name, _styles.LeftParagraphBold));
             
-            var responsePara = Para();
+            var responsePara = Para(0);
             textBox.AddParagraph(responsePara);
             responsePara.AddRun(new RunLayout(value, _styles.LeftParagraph));
         }
@@ -334,5 +379,5 @@ public sealed class CvBuilder
         return pageLayout;
     }
     
-    private ParagraphLayout Para() => new(_styles.Paragraph);
+    private ParagraphLayout Para(int priority = 0) => new(_styles.Paragraph) { Priority = priority };
 }

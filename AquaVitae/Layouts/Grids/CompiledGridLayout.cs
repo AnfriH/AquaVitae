@@ -17,9 +17,28 @@ public sealed class CompiledGridLayout(
     
     public override void CollectParagraphs(Action<ParagraphLayoutBase> callback)
     {
-        foreach (var element in Elements)
+        var frontier = new Stack<int>();
+        var remainingParents = ParentCounts.ToArray();
+        
+        for (var i = RootIndices.Length - 1; i >= 0; i--)
         {
+            frontier.Push(RootIndices[i]);
+        }
+
+        while (frontier.Count > 0)
+        {
+            var index = frontier.Pop();
+            var element = Elements[index];
+            
             element.Element.CollectParagraphs(callback);
+
+            if (element.ChildrenIndex == -1 || --remainingParents[element.ChildrenIndex] > 0) continue;
+            
+            var childrenIndices = ChildIndices[element.ChildrenIndex];
+            for (var i = childrenIndices.Length - 1; i >= 0; i--)
+            {
+                frontier.Push(childrenIndices[i]);
+            }
         }
     }
 }

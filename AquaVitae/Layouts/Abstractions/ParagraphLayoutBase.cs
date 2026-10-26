@@ -6,6 +6,11 @@ public closed class ParagraphLayoutBase(StyleId<ParagraphStyle> style) : LayoutB
 {
     // Higher priority paragraphs are inserted earlier into the docx body. Priority is from smallest to largest.
     public int Priority { get; init; }
+    
+    /// <summary>
+    /// Whether the paragraph will be rendered. This can be used to add contextual metadata for scrapers.
+    /// </summary>
+    public bool Hidden { get; init; }
     public StyleId<ParagraphStyle> Style => style;
 
     public int CompareTo(ParagraphLayoutBase? other)

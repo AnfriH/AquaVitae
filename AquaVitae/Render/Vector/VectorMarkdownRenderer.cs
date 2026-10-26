@@ -13,6 +13,9 @@ public sealed class VectorMarkdownRenderer(VectorParagraphRenderer paragraphRend
         var document = new MarkdownDocument();
         foreach (var paragraphLayoutBase in paragraphLayouts)
         {
+            // Don't render hidden paragraphs
+            if (paragraphLayoutBase.Hidden) continue;
+            
             var block = RenderParagraphBase(paragraphLayoutBase);
             document.Add(block);
         }
@@ -65,6 +68,9 @@ public sealed class VectorMarkdownRenderer(VectorParagraphRenderer paragraphRend
         
         foreach (var runLayoutBase in paragraphLayout.Runs)
         {
+            // Don't render hidden runs
+            if (runLayoutBase.Hidden) continue;
+            
             Inline inline = runLayoutBase switch
             {
                 HyperlinkLayout hyperlinkLayout => new LinkInline(
