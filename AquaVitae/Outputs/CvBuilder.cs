@@ -16,9 +16,13 @@ public sealed class CvBuilder
     private readonly CvData _data;
     private readonly DocumentLayout _documentLayout;
     private readonly CvStylesCollection _styles;
-
-    private static readonly Margins DefaultMargins = new(0, 36, 18, 18);
+    
+    private static readonly Margins DefaultMargins = new(12, 12, 18, 18);
+    private static readonly Margins NameMargins = new(-6, 12, 18, 18);
+    private static readonly Margins BlurbMargins = new(0, 12, 18, 18);
     private static readonly Margins LeftHeadingMargins = new(3, -6, 18, 18);
+    private static readonly Margins RightBulletMargins = new(3, 0, 18, 18);
+    private static readonly Margins PageMargins = new(18, 18, 0, 0);
     
     private static readonly PrintPoint LeftWidth = PageSizes.A4.Width / 3;
     
@@ -67,6 +71,7 @@ public sealed class CvBuilder
             rightBuilder.AddCell(new ElementCell(BuildRightExperience(experience), i++, 0));
         }
 
+        rightBuilder.AddCell(new ElementCell(new BoxLayout { Height = 12 }, i++, 0));
         rightBuilder.AddCell(new ElementCell(BuildRightHeading("Education"), i++, 0));
 
         foreach (var education in _data.Education)
@@ -116,9 +121,8 @@ public sealed class CvBuilder
         
         var respLayout = new TextBoxLayout
         {
-            InnerMargins = LeftHeadingMargins
+            InnerMargins = RightBulletMargins
         };
-        
         
         var respPara = new VerticalListLayout(_styles.Paragraph2, _styles.RightList) { Priority = 1 };
         respLayout.AddParagraph(respPara);
@@ -162,7 +166,7 @@ public sealed class CvBuilder
 
         var roleLayout = new TextBoxLayout
         {
-            InnerMargins = LeftHeadingMargins
+            InnerMargins = RightBulletMargins
         };
         var rolePara = new ParagraphLayout(_styles.Paragraph2) { Priority = 1 };
         roleLayout.AddParagraph(rolePara);
@@ -207,7 +211,7 @@ public sealed class CvBuilder
     {
         var textBox = new TextBoxLayout
         {
-            InnerMargins = DefaultMargins,
+            InnerMargins = BlurbMargins,
             ParagraphSpacing = 0.5f
         };
 
@@ -246,7 +250,7 @@ public sealed class CvBuilder
     {
         var textBox = new TextBoxLayout
         {
-            InnerMargins = DefaultMargins,
+            InnerMargins = NameMargins,
             ParagraphSpacing = -0.25f
         };
         
@@ -315,12 +319,7 @@ public sealed class CvBuilder
             Grid = gridLayout,
             Background = new CanvasLayout(),
             OverflowBehaviour = PageOverflowBehaviour.PageFit,
-            Margins = new Margins(
-                18, 
-                9,
-                0,
-                0
-            )
+            Margins = PageMargins
         };
 
         var backgroundGrid = new TableBuilder(1, 2);
