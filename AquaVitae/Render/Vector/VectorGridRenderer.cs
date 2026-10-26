@@ -1,4 +1,6 @@
+using System.Collections.Immutable;
 using AquaVitae.Layouts;
+using AquaVitae.Layouts.Grids;
 using AquaVitae.Layouts.Types;
 using VectSharp;
 
@@ -6,173 +8,147 @@ namespace AquaVitae.Render.Vector;
 
 public sealed class VectorGridRenderer
 {
-    private readonly float _widthPoints;
-    private readonly float _heightPoints;
-    
-    private readonly List<(int Row, float Height)> _rowHeights = [];
-    private readonly VectorElementRenderer _elementRenderer;
-    private readonly GridLayout _gridLayout;
+    private readonly CompiledGridLayout _gridLayout;
     private readonly Graphics _graphics;
+    private readonly LayoutConstraints _constraints;
+    private readonly VectorElementRenderer _elementRenderer;
     private readonly PageOverflowBehaviour _overflowBehaviour;
+    private readonly ChildrenMetadata[] _childrenMetadata;
 
-    private readonly PrintPoint X;
-    private readonly PrintPoint Y;
-    
     public VectorGridRenderer(
+        CompiledGridLayout gridLayout, 
+        Graphics graphics, 
+        LayoutConstraints constraints,
         VectorElementRenderer elementRenderer,
-        GridLayout gridLayout,
-        PrintPoint width,
-        PrintPoint height,
-        Graphics graphics,
         PageOverflowBehaviour overflowBehaviour = PageOverflowBehaviour.Truncate
     )
     {
-        _elementRenderer = elementRenderer;
         _gridLayout = gridLayout;
         _graphics = graphics;
+        _constraints = constraints;
+        _elementRenderer = elementRenderer;
         _overflowBehaviour = overflowBehaviour;
-        _widthPoints = width.Points;
-        _heightPoints = height.Points;
-        X = PrintPoint.Zero;
-        Y = PrintPoint.Zero;
-    }
 
-    public VectorGridRenderer(
-        VectorElementRenderer elementRenderer,
-        GridLayout gridLayout,
-        PrintPoint width,
-        PrintPoint x,
-        PrintPoint y,
-        Graphics graphics
-    )
-    {
-        _elementRenderer = elementRenderer;
-        _gridLayout = gridLayout;
-        _graphics = graphics;
-        _overflowBehaviour = PageOverflowBehaviour.Truncate;
-        _widthPoints = width.Points;
-        
-        // I set this to NaN as it should not be used if instantiated with this constructor
-        _heightPoints = float.NaN;
-        X = x;
-        Y = y;
+        var childrenCount = _gridLayout.ChildIndices.Count;
+        _childrenMetadata = new ChildrenMetadata[childrenCount];
+
+        for (var i = 0; i < childrenCount; i++)
+        {
+            _childrenMetadata[i] = new ChildrenMetadata(_gridLayout.ChildIndices[i], _gridLayout.ParentCounts[i]);
+        }
     }
 
     public PrintPoint RenderGrid()
     {
-        foreach (var contents in _gridLayout.Cells)
+        var frontier = new Queue<(int ElementIndex, PrintPoint YPosition)>();
+        frontier.EnsureCapacity(_gridLayout.RootIndices.Length);
+        foreach (var element in _gridLayout.RootIndices) 
         {
-            var rendered = true;
-            switch (contents)
-            {
-                case GridCell cell:
-                    rendered &= RenderCell(cell);
-                    break;
-                case List<GridCell> cells:
-                    foreach (var cell in cells)
-                    {
-                        rendered &= RenderCell(cell);
-                    }
-                    break;
-            }
-            if (!rendered) break;
+            frontier.Enqueue((element, 0));
         }
-        
-        if (_rowHeights.Count == 0) return PrintPoint.Zero;
-        return _rowHeights[^1].Height;
+
+        var maxYPosition = PrintPoint.Zero;
+
+        while (frontier.Count > 0)
+        {
+            var (index, yPosition) = frontier.Dequeue();
+            
+            var element = _gridLayout.Elements[index];
+
+            // If the element fails to render, we skip this element
+            if (!TryRenderElement(element, yPosition, out var elementYPosition)) continue;
+            
+            maxYPosition = maxYPosition.Max(elementYPosition);
+            
+            var childrenIndex = element.ChildrenIndex;
+            if (childrenIndex == -1) continue;
+            
+            ref var metadata = ref _childrenMetadata[childrenIndex];
+            if (!metadata.AddYPosition(elementYPosition)) continue;
+            
+            // Once all the parents have been visited, we queue the children
+            foreach (var childIndex in metadata.ChildIndices)
+            {
+                frontier.Enqueue((childIndex, metadata.YPosition));
+            }
+        }
+
+        return maxYPosition;
+    }
+
+    private struct ChildrenMetadata(ImmutableArray<int> childIndices, int remainingParents)
+    {
+        private int _remainingParents = remainingParents;
+        public ImmutableArray<int> ChildIndices => childIndices;
+        public PrintPoint YPosition { get; private set; }
+
+        // Returns true if all parents have been added
+        public bool AddYPosition(PrintPoint yPosition)
+        {
+            YPosition = YPosition.Max(yPosition);
+            _remainingParents--;
+
+            return _remainingParents == 0;
+        }
     }
     
-    // True means that this cell was rendered successfully; false means that it was not (usually because it was truncated).
-    private bool RenderCell(GridCell cell)
+    /// <summary>
+    /// Tries to render the given grid element if there is room to do so.
+    /// Returns true if the element is rendered, and false if not.
+    /// </summary>
+    /// <param name="element">The grid element to be rendered</param>
+    /// <param name="yPosition">The Y position to render the element at</param>
+    /// <param name="elementYPosition">The Y position at the base of the rendered element</param>
+    /// <returns>Whether the element rendered successfully</returns>
+    private bool TryRenderElement(CompiledGridElement element, PrintPoint yPosition, out PrintPoint elementYPosition)
     {
-        var xWeight = cell.ColumnIndex == 0 ? 0 : _gridLayout.ColumnWeights[cell.ColumnIndex - 1];
-        var widthWeight = _gridLayout.ColumnWeights[cell.CornerColumnIndex] - xWeight;
-
-        var cellWidth = widthWeight * _widthPoints;
-        var x = xWeight * _widthPoints;
-        var y = GetY(cell.RowIndex);
-
-        if (_overflowBehaviour == PageOverflowBehaviour.Truncate && _heightPoints < y)
+        if (_overflowBehaviour == PageOverflowBehaviour.Truncate && yPosition >= _constraints.Height)
         {
+            elementYPosition = yPosition;
             return false;
         }
-
-        var cellGraphics = new Graphics();
-        var cellHeight = _elementRenderer.RenderElement(
-            cell.Element,
-            cellGraphics,
-            X + x,
-            Y + y,
-            cellWidth,
-            cell.MaxHeight
-        ).Points;
-
-        var minHeight = cell.MinHeight.Points;
-        if (cellHeight < minHeight)
+        
+        var remainingHeight = _constraints.Height - yPosition.Points % _constraints.Height.Points;
+        
+        var xPosition = element.XFraction * _constraints.Width;
+        var width = element.WidthFraction * _constraints.Width;
+        
+        var elementGraphics = new Graphics();
+        
+        var renderedHeight = _elementRenderer.RenderElement(
+            element.Element,
+            elementGraphics,
+            new LayoutConstraints(0, 0, width, element.MaximumHeight)
+        );
+        
+        // Crop the element to the available space
+        var height = renderedHeight.Max(element.MinimumHeight);
+        if (_overflowBehaviour == PageOverflowBehaviour.Truncate)
         {
-            cellHeight = minHeight;
+            height = height.Min(remainingHeight);
         }
         
-        if (cell.MaxHeight.HasValue && cellHeight > cell.MaxHeight.Value.Points)
-        {
-            // TODO: Print out a warning that this cell was cropped!
-            cellHeight = cell.MaxHeight.Value.Points;
-        }
-        
+        elementGraphics.Crop(new Rectangle(0, 0, width.Points, height.Points));
+
         if (_overflowBehaviour == PageOverflowBehaviour.PageFit)
         {
-            // If the cell is between pages, we shift it down to the start of the next page.
-            // This is the only place where we use _heightPoints.
-            var topPageIndex = MathF.Floor(y / _heightPoints);
-            var bottomPageIndex = MathF.Floor((y + cellHeight) / _heightPoints);
-
-            var pageDifference = (int)MathF.Abs(bottomPageIndex - topPageIndex);
-            if (pageDifference == 1) y = bottomPageIndex * _heightPoints;
+            // If the element is too tall to fit on the current page and isn't taller than a whole page,
+            // shift it down to the next page
+            if (height > remainingHeight && height < _constraints.Height)
+            {
+                yPosition += remainingHeight;
+            }
         }
-            
-        // We crop the cell to its rendered dimensions
-        cellGraphics.Crop(new Rectangle(0, 0, cellWidth, cellHeight));
-        _graphics.DrawGraphics(x, y, cellGraphics);
         
-        // We update the height of the row below us
-        UpdateYHeight(cell.CornerRowIndex + 1, y + cellHeight);
-
+        // Draw the element to the backing canvas
+        _graphics.DrawGraphics(
+            _constraints.X.Points + xPosition.Points, 
+            _constraints.Y.Points + yPosition.Points,
+            elementGraphics
+        );
+        
+        // Set the new y-position for the following element
+        elementYPosition = yPosition + height;
         return true;
-    }
-
-    private float GetY(int rowIndex)
-    {
-        // First we find our y position
-        if (rowIndex == 0) return 0;
-        
-        for (var i = _rowHeights.Count - 1; i >= 0; i--)
-        {
-            var (row, rowHeight) = _rowHeights[i];
-            if (row > rowIndex) continue;
-            return rowHeight;
-        }
-
-        return 0;
-    }
-    
-    private void UpdateYHeight(int rowIndex, float rowHeight)
-    {
-        // If there are no entries, we must be the first height for this row
-        if (_rowHeights.Count == 0)
-        {
-            _rowHeights.Add((rowIndex, rowHeight));
-            return;
-        }
-        
-        // If the entry is for an earlier row, we must be the first height for this row
-        var (lastRow, lastHeight) = _rowHeights[^1];
-        if (lastRow != rowIndex)
-        {
-            _rowHeights.Add((rowIndex, rowHeight));
-            return;
-        }
-        
-        // Elsewise, we compare to find the tallest element for this row
-        _rowHeights[^1] = (rowIndex, MathF.Max(lastHeight, rowHeight));
     }
 }

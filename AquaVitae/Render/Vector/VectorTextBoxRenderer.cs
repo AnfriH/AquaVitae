@@ -10,10 +10,10 @@ public class VectorTextBoxRenderer(
     VectorHyperlinkRenderer hyperlinkRenderer
 )
 {
-    public PrintPoint RenderTextBox(TextBoxLayout textBoxLayout, Graphics graphics, PrintPoint width, PrintPoint x, PrintPoint y)
+    public PrintPoint RenderTextBox(TextBoxLayout textBoxLayout, Graphics graphics, LayoutConstraints constraints)
     {
         var textGraphics = textBoxLayout.Paragraphs.Count > 0 
-            ? RenderParagraphs(textBoxLayout, width, x, y) 
+            ? RenderParagraphs(textBoxLayout, constraints) 
             : null;
 
         var actualHeight = textGraphics != null 
@@ -25,9 +25,9 @@ public class VectorTextBoxRenderer(
             var fillColor = textBoxLayout.FillColor.Value;
             
             graphics.FillRectangle(
-                0,
-                0,
-                width.Points,
+                constraints.X.Points,
+                constraints.Y.Points,
+                constraints.Width.Points,
                 actualHeight.Points,
                 fillColor.ToVectSharpColor()
             );
@@ -35,17 +35,21 @@ public class VectorTextBoxRenderer(
         
         if (textGraphics != null)
         {
-            graphics.DrawGraphics(0, 0, textGraphics.Graphics);
+            graphics.DrawGraphics(
+                constraints.X.Points,
+                constraints.Y.Points,
+                textGraphics.Graphics
+            );
         }
 
         return actualHeight;
     }
 
-    private Page RenderParagraphs(TextBoxLayout textBoxLayout, PrintPoint width, PrintPoint x, PrintPoint y)
+    private Page RenderParagraphs(TextBoxLayout textBoxLayout, LayoutConstraints constraints)
     {
         var margins = textBoxLayout.InnerMargins;
         
-        var paragraphRenderer = new VectorParagraphRenderer(styleRenderer, x, y)
+        var paragraphRenderer = new VectorParagraphRenderer(styleRenderer, constraints.X, constraints.Y)
         {
             Margins = new Margins(
                 margins.Left.Points,
@@ -61,7 +65,7 @@ public class VectorTextBoxRenderer(
         
         var innerPage = paragraphRenderer.RenderSinglePage(
             document,
-            width.Points,
+            constraints.Width.Points,
             out var hyperlinks,
             out _
         );

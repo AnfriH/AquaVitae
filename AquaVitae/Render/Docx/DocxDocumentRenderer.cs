@@ -3,6 +3,7 @@ using AquaVitae.Layouts.Abstractions;
 using AquaVitae.Render.Vector;
 using DocumentFormat.OpenXml;
 using DocumentFormat.OpenXml.Packaging;
+using DocumentFormat.OpenXml.Validation;
 using DocumentFormat.OpenXml.Wordprocessing;
 
 namespace AquaVitae.Render.Docx;
@@ -16,6 +17,14 @@ public sealed class DocxDocumentRenderer(DocxRendererSettings settings)
         var mainPart = wordDocument.AddMainDocumentPart();
         
         RenderBody(document, mainPart, svgDocument.Pages);
+        
+        var validator = new OpenXmlValidator();
+
+        foreach (var errorInfo in validator.Validate(wordDocument))
+        {
+            Console.WriteLine(errorInfo.Description);
+            Console.WriteLine(errorInfo.Node!.XName);
+        }
     }
 
     private void RenderBody(DocumentLayout document, MainDocumentPart mainPart, IReadOnlyList<SvgPage> svgPages)

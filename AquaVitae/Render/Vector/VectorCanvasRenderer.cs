@@ -6,12 +6,12 @@ namespace AquaVitae.Render.Vector;
 
 public sealed class VectorCanvasRenderer(VectorElementRenderer elementRenderer)
 {
-    public PrintPoint RenderCanvas(CanvasLayout canvasLayout, Graphics graphics, PrintPoint x, PrintPoint y)
+    public PrintPoint RenderCanvas(CanvasLayout canvasLayout, Graphics graphics, LayoutConstraints constraints)
     {
         var canvas = new Graphics();
 
-        var totalWidth = 0f;
-        var totalHeight = 0f;
+        var totalWidth = PrintPoint.Zero;
+        var totalHeight = PrintPoint.Zero;
         foreach (var positionedElement in canvasLayout.Elements)
         {
             canvas.Save();
@@ -19,24 +19,26 @@ public sealed class VectorCanvasRenderer(VectorElementRenderer elementRenderer)
             elementRenderer.RenderElement(
                 positionedElement.Element,
                 canvas,
-                x + positionedElement.X,
-                y + positionedElement.Y,
-                positionedElement.Width,
-                positionedElement.Height
+                new LayoutConstraints(
+                    constraints.X + positionedElement.X, 
+                    constraints.Y + positionedElement.Y, 
+                    positionedElement.Width,
+                    positionedElement.Height
+                )
             );
             canvas.Restore();
-            totalWidth = MathF.Max(totalWidth, positionedElement.X.Points + positionedElement.Width.Points);
-            totalHeight = MathF.Max(totalHeight, positionedElement.Y.Points + positionedElement.Height.Points);
+            totalWidth = totalWidth.Max(positionedElement.X + positionedElement.Width);
+            totalHeight = totalHeight.Max(positionedElement.Y + positionedElement.Height);
         }
 
         canvas.Crop(new Rectangle(
             0,
             0,
-            canvasLayout.Width?.Points ?? totalWidth,
-            canvasLayout.Height?.Points ?? totalHeight
+            canvasLayout.Width?.Points ?? totalWidth.Points,
+            canvasLayout.Height?.Points ?? totalHeight.Points
         ));
         
-        graphics.DrawGraphics(0, 0, canvas);
+        graphics.DrawGraphics(constraints.X.Points, constraints.Y.Points, canvas);
 
         return canvasLayout.Height ?? PrintPoint.Zero;
     }

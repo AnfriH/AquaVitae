@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using AquaVitae.Layouts;
+using AquaVitae.Layouts.Types;
 using VectSharp;
 
 namespace AquaVitae.Render.Vector;
@@ -17,48 +18,47 @@ public class VectorPageRenderer(
         var backgroundGraphics = new Graphics();
         var graphics = new Graphics();
 
-        var actualPageHeight = 0f;
+        var pageConstraints = new LayoutConstraints(0, 0, width, height);
+        var actualPageHeight = PrintPoint.Zero;
         
         // Render the layers onto the page canvas
         var background = pageLayout.Background;
         if (background != null)
         {
-            actualPageHeight = MathF.Max(
-                actualPageHeight,
-                elementRenderer.CanvasRenderer.RenderCanvas(background, backgroundGraphics, 0, 0).Points
-            );
+            actualPageHeight = elementRenderer.CanvasRenderer.RenderCanvas(
+                background, 
+                backgroundGraphics, 
+                pageConstraints
+            ).Max(actualPageHeight);
         }
         
         var grid = pageLayout.Grid;
         if (grid != null)
         {
-            actualPageHeight = MathF.Max(
-                actualPageHeight,
-                new VectorGridRenderer(
-                    elementRenderer, 
-                    grid, 
-                    width, 
-                    height, 
-                    graphics, 
-                    pageLayout.OverflowBehaviour
-                ).RenderGrid().Points
-            );
+            actualPageHeight = new VectorGridRenderer(
+                grid,
+                graphics,
+                pageConstraints,
+                elementRenderer,
+                pageLayout.OverflowBehaviour
+            ).RenderGrid().Max(actualPageHeight);
         }
         
         var foreground = pageLayout.Foreground;
         if (foreground != null)
         {
-            actualPageHeight = MathF.Max(
-                actualPageHeight,
-                elementRenderer.CanvasRenderer.RenderCanvas(foreground, graphics, 0, 0).Points
-            );
+            actualPageHeight = elementRenderer.CanvasRenderer.RenderCanvas(
+                foreground,
+                graphics,
+                pageConstraints
+            ).Max(actualPageHeight);
         }
         
         switch (pageLayout.OverflowBehaviour)
         {
             case PageOverflowBehaviour.Scale:
             {
-                RenderSinglePage(MathF.Max(actualPageHeight, height.Points));
+                RenderSinglePage(height.Max(actualPageHeight));
                 return;
             }
             case PageOverflowBehaviour.Truncate:
@@ -69,7 +69,7 @@ public class VectorPageRenderer(
             case PageOverflowBehaviour.Continuous:
             case PageOverflowBehaviour.PageFit:
                 // Elsewise, we split the page up into multiple pieces
-                var pageCount = MathF.Ceiling(actualPageHeight / height.Points);
+                var pageCount = (int)MathF.Ceiling(actualPageHeight / height);
                 for (var i = 0; i < pageCount; i++)
                 {
                     var page = new Page(width.Points, height.Points)
@@ -90,9 +90,9 @@ public class VectorPageRenderer(
                 throw new UnreachableException();
         }
         
-        void RenderSinglePage(float pageHeight)
+        void RenderSinglePage(PrintPoint pageHeight)
         {
-            var page = new Page(width.Points, pageHeight)
+            var page = new Page(width.Points, pageHeight.Points)
             {
                 Background = pageLayout.PageColor.ToVectSharpColor(),
                 Graphics = backgroundGraphics

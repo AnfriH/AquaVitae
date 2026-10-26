@@ -1,5 +1,6 @@
 using AquaVitae.Layouts;
 using AquaVitae.Layouts.Abstractions;
+using AquaVitae.Layouts.Grids;
 using AquaVitae.Layouts.Types;
 using VectSharp;
 
@@ -25,11 +26,6 @@ public sealed class VectorElementRenderer
     /// </summary>
     /// <param name="element">The element to be rendered</param>
     /// <param name="graphics">The graphics pane to render to</param>
-    /// <param name="width">The target width of the graphics pane</param>
-    /// <param name="height">
-    /// The target height of the graphics pane.
-    /// When this is null, the height will be determined by the element.
-    /// </param>
     /// <returns>The actual height of the element rendered to the graphics</returns>
     /// <remarks>
     /// The width and height provided do not limit the actual size of the rendered output.
@@ -39,18 +35,20 @@ public sealed class VectorElementRenderer
     public PrintPoint RenderElement(
         ElementLayoutBase element,
         Graphics graphics,
-        PrintPoint x,
-        PrintPoint y,
-        PrintPoint width,
-        PrintPoint? height
+        LayoutConstraints constraints
     )
     {
         return element switch
         {
-            GridLayout gridLayout => new VectorGridRenderer(this, gridLayout, width, x, y, graphics).RenderGrid(),
-            TextBoxLayout textBoxLayout => TextBoxRenderer.RenderTextBox(textBoxLayout, graphics, width, x, y),
-            BoxLayout boxLayout => BoxRenderer.RenderBox(boxLayout, graphics, width, height),
-            CanvasLayout canvasLayout => CanvasRenderer.RenderCanvas(canvasLayout, graphics, x, y),
+            CompiledGridLayout gridLayout => new VectorGridRenderer(
+                gridLayout,
+                graphics,
+                constraints,
+                this
+            ).RenderGrid(),
+            TextBoxLayout textBoxLayout => TextBoxRenderer.RenderTextBox(textBoxLayout, graphics, constraints),
+            BoxLayout boxLayout => BoxRenderer.RenderBox(boxLayout, graphics, constraints),
+            CanvasLayout canvasLayout => CanvasRenderer.RenderCanvas(canvasLayout, graphics, constraints),
         };
     }
 }

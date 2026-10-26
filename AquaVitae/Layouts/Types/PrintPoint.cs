@@ -8,6 +8,9 @@ namespace AquaVitae.Layouts.Types;
 public readonly record struct PrintPoint(float Points) : IComparable<PrintPoint>
 {
     public static PrintPoint Zero => new(0);
+    public static PrintPoint PositiveInfinity => new(float.PositiveInfinity);
+    public static PrintPoint NegativeInfinity => new(float.NegativeInfinity);
+    public static PrintPoint NaN => new(float.NaN);
     
     private const int PointsPerInch = 72;
     private const float MillimetersPerInch = 25.4f;
@@ -16,6 +19,25 @@ public readonly record struct PrintPoint(float Points) : IComparable<PrintPoint>
     public float Inches => Points / PointsPerInch;
     public float Millimeters => Points * MillimetersPerPoint;
 
+    public bool IsInfinity => float.IsPositiveInfinity(Points);
+    public bool IsNegativeInfinity => float.IsNegativeInfinity(Points);
+    public bool IsNaN => float.IsNaN(Points);
+
+    public PrintPoint Max(PrintPoint other)
+    {
+        return new PrintPoint(Math.Max(Points, other.Points));
+    }
+
+    public PrintPoint Min(PrintPoint other)
+    {
+        return new PrintPoint(Math.Min(Points, other.Points));
+    }
+    
+    public int CompareTo(PrintPoint other)
+    {
+        return Points.CompareTo(other.Points);
+    }
+    
     public static PrintPoint FromPoints(float points)
     {
         return new PrintPoint(points);
@@ -29,11 +51,6 @@ public readonly record struct PrintPoint(float Points) : IComparable<PrintPoint>
     public static PrintPoint FromInches(float inches)
     {
         return new PrintPoint(inches * PointsPerInch);
-    }
-
-    public int CompareTo(PrintPoint other)
-    {
-        return Points.CompareTo(other.Points);
     }
 
     public static PrintPoint operator +(PrintPoint left, PrintPoint right)

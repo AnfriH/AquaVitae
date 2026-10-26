@@ -1,4 +1,5 @@
 using AquaVitae.Layouts.Abstractions;
+using AquaVitae.Layouts.Grids;
 using AquaVitae.Layouts.Types;
 
 namespace AquaVitae.Layouts;
@@ -7,9 +8,10 @@ public sealed class PageLayout(PageSize pageSize) : LayoutBase
 {
     public PageSize PageSize => pageSize;
     public PageOverflowBehaviour OverflowBehaviour { get; init; } = PageOverflowBehaviour.Truncate;
+    public Margins Margins { get; init; } = Margins.Zero;
     public Color PageColor { get; init; } = Colors.White;
     public CanvasLayout? Background { get; init; }
-    public GridLayout? Grid { get; init; }
+    public CompiledGridLayout? Grid { get; init; }
     public CanvasLayout? Foreground { get; init; }
 }
 
